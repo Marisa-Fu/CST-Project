@@ -1,2 +1,1 @@
-Python project repository
-Concept: Python-based trivia website
+Project Concept: Python-based trivia website
