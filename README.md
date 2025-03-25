@@ -2,4 +2,4 @@ INFORMATION If you want to change the font size or type or color or any design c
 
 THE PURPOSE of the style.css file is to import the design from the _globals.scss file
 
-YOU MIGHT want to DOWNLOAD 'Live Sass Compiler' on Visual Studio Code that you can run .scss and .css files
+YOU MIGHT want to DOWNLOAD 'Live Sass Compiler' on Visual Studio Code so that you can run .scss and .css files
