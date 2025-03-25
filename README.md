@@ -5,4 +5,4 @@ THE PURPOSE of the style.css file is to import the design from the _globals.scss
 YOU MIGHT want to DOWNLOAD 'Live Sass Compiler' on Visual Studio Code so that you can run .scss and .css files
 
 
----<link rel="stylesheet" href="dist/style.css">--- <-- this line of code within the index html allows the style from style.css to apply to the page itself
+""link rel="stylesheet" href="dist/style.css""" <-- this line of code within the index html allows the style from style.css to apply to the page itself
