@@ -1,4 +1,3 @@
 Project Concept: Python-based trivia website
 
-added a webhook 3/25/25:
-idk what it does yet
+files can be updated and coded in real time when you go to codespace
