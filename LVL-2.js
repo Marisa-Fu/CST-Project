@@ -273,5 +273,4 @@ function startQuiz() {
     }
 }
 
-// Start the quiz when the page loads
 startQuiz();
