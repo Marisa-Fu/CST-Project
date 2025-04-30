@@ -21,54 +21,54 @@ function confirmLogout(confirm) {
 // Quiz data
 const quizData = [
   {
-      question: "1.Which programming structure allows a block of code to be executed repeatedly? ",
-      options: ["Selection statement", "Loop", "Branching statement", "Function"],
-      correctAnswer: "Loop"
+      question: "1. What is Python?",
+      options: ["A type of snake", "A software used exclusively for video game graphics", "A website used for downloading movies", "A high-level programming language used for many different types of applications"],
+      correctAnswer: "A high-level programming language used for many different types of applications"
   },
   {
-      question: "2.Which selection statement is used to execute one block of code if a condition is true and another block if it's false?",
-      options: ["if", "for", "while", "if-else"],
-      correctAnswer: "if-else"
+      question: "2. What does the ‘print()’ function do? ",
+      options: ["It sends a document to your nearest printer", "It plays an alert anytime a variable is updated", "It displays what is inputted between the parentheses", "It draws a picture on the screen"],
+      correctAnswer: "It displays what is inputted between the parentheses"
   },
   {
-      question: "3.Which type of loop in many programming languages continues to execute as long as a certain condition is true?",
-      options: ["for loop", "if loop", "while loop", "else loop"],
-      correctAnswer: "while loop"
+      question: "3. What is an Algorithm?",
+      options: ["A specific solution to a specific problem", "A step-by-step process for solving a general class of problems", "A random sequence of instructions", "A type of computer hardware"],
+      correctAnswer: "A step-by-step process for solving a general class of problems"
   },
   {
-      question: "4.Which type of loop is often used to iterate over a sequence of items, like a list or a string?",
-      options: ["while loop", "if loop", "for loop", "do-while loop"],
-      correctAnswer: "for loop"
+      question: "4.What will this code output? \n print(“Hello” + “World”)",
+      options: ["Hello World", "HelloWorld", "Hello+World", "Hello World!"],
+      correctAnswer: "HelloWorld"
   },
   {
-      question: "5.What is the purpose of the continue statement within a loop?",
-      options: ["To exit the loop immediately", "To repeat the current iteration", "To skip the rest of the code in the current iteration and move to the next", "To define the loop's ending point"],
-      correctAnswer: "To skip the rest of the code in the current iteration and move to the next."
+      question: "5. What is a variable?",
+      options: ["A button that restarts the computer", "A way to store and label data in a program", "A type of error message", "A shortcut for printing text on the screen"],
+      correctAnswer: "A way to store and label data in a program "
   },
   {
-      question: "6.What is a string in programming?",
-      options: ["A sequence of numbers", "A single character", "A sequence of characters", "A collection of booleans"],
-      correctAnswer: "A sequence of characters"
+      question: "6. What is a data type?",
+      options: ["A category that defines what kind of value a variable holds", "A kind of error that stops your code from running", "A tool used to draw graphics on your computer", "A Python file that stores secret passwords"],
+      correctAnswer: "A category that defines what kind of value a variable holds"
   },
   {
-      question: "7.What is the purpose of the (r) mode when opening a file?",
-      options: ["To open the file for writing", "To open the file for appending", "To open the file for reading", "To open the file for both reading and writing"],
-      correctAnswer: "To open the file for reading"
+      question: "7. Which of the following are data type examples?",
+      options: ["int, float, str, bool", "print, input, len, type", "for, while, if, else", "True, False, None, break"],
+      correctAnswer: "int, float, str, bool"
   },
   {
-      question: "8.What is the purpose of the strip() method often used with strings read from a file?",
-      options: ["To convert the string to uppercase", "To remove leading and trailing whitespace characters", "To count the number of characters in the string", "To split the string into a list of words"],
-      correctAnswer: "To remove leading and trailing whitespace characters"
+      question: "8. Which is an example of a string datatype? ",
+      options: ["42", "‘Python’", "False", "3.143"],
+      correctAnswer: "‘Python’"
   },
   {
-      question: "9.What is the purpose of the (w) mode when opening a file?",
-      options: ["To open the file for reading only", "To open the file for appending to the end", "To open the file for writing, overwriting the file if it exists", "To open the file for both reading and writing without overwriting"],
-      correctAnswer: "To open the file for writing, overwriting the file if it exists"
+      question: "9. What is the purpose of an end-of-line comment in Python?",
+      options: ["To end a line of code with a semicolon", "To add a comment that Python will ignore, starting with a #", "To stop the program from running", "To print hidden text to the user"],
+      correctAnswer: "To add a comment that Python will ignore, starting with a #"
   },
   {
-      question: "10.Which of the following operations can be used to join two strings together?",
-      options: ["Subtraction", "Multiplication", "Concatenation", "Division "],
-      correctAnswer: "Concatenation"
+      question: "10. What is the correct way to take user input in Python?",
+      options: ["scan(input)", "get.input()", "input()", "read.input()"],
+      correctAnswer: "input()"
   }
 ];
 
