@@ -1,3 +1,4 @@
+// Your existing functions for popup and logout
 function openPopup() {
     document.getElementById("popup").style.display = "flex";
 }
@@ -273,4 +274,5 @@ function startQuiz() {
     }
 }
 
+// Start the quiz when the page loads
 startQuiz();

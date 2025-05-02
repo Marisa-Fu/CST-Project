@@ -1,14 +1,12 @@
+body {
+    font-family: 'Inter', sans-serif;
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
     font-family: 'Segoe UI', 'Courier New', Courier, monospace;
-    
-    body {
-    font-family: 'Inter', sans-serif;
-}
-
-
 }
 
 body {
@@ -27,7 +25,7 @@ body::before {
     left: 0;
     width: 100%;
     height: 100%;
-    background-image: url('logop.png');
+    background-image: url('/static/images/logop.png');
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
@@ -242,9 +240,9 @@ main h1 {
     left: 50%;
     transform: translate(-50%, -50%);
     font-size: 5rem;
-    color: magenta;
+    color: black;
     z-index: 1000;
-    font-family: 'Special Gothic Regular', cursive;
+    font-family: Arial, Helvetica, sans-serif;
 }
 .special-gothic {
      font-family: 'Special Gothic Regular', cursive;
