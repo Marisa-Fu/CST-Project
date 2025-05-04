@@ -4,25 +4,25 @@ body {
     font-family: montserrat;
     background: linear-gradient(150deg, #3498db, #f7dc6f);
     height: 100vh;
-    display: flex; /* Para centrar el formulario */
-    justify-content: center; /* Centrar horizontalmente */
-    align-items: center; /* Centrar verticalmente */
+    display: flex; 
+    justify-content: center;
+    align-items: center;
 }
 
 .formulario {
     width: 400px;
     background: white;
     border-radius: 10px;
-    padding: 30px; /* Añadí padding al contenedor del formulario */
-    box-sizing: border-box; /* Asegura que el padding no aumente el ancho total */
+    padding: 30px;
+    box-sizing: border-box;
 }
 
 .formulario h1 {
     text-align: center;
-    padding: 20px 0 30px 0; /* Ajusté el padding superior para dejar espacio a la imagen */
-    /*border-bottom: 1px solid silver; /* Cambié a 1px para que sea más ligero */
-    margin-bottom: 40px; /* Añadí margen inferior para separar del formulario */
-    position: relative; /* Necesario para posicionar la imagen detrás */
+    padding: 20px 0 30px 0;
+
+    margin-bottom: 40px;
+    position: relative;
 
     font-family: "Source Code Pro", monospace;
     font-optical-sizing: auto;
@@ -34,14 +34,14 @@ body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background-image: url("../images/image.png"); /* Reemplaza con la ruta correcta de tu imagen */
+    background-image: url("../images/image.png");
     background-repeat: no-repeat;
     background-position: center;
-    background-size: contain; /* Para que la imagen se ajuste al tamaño sin recortar, usa 'cover' si quieres que cubra el área */
-    width: 80px; /* Ajusta el ancho de la imagen según necesites */
-    height: 80px; /* Ajusta la altura de la imagen según necesites */
-    opacity: 0.3; /* Ajusta la opacidad para que la imagen quede de fondo */
-    z-index: 3; /* Para que la imagen quede detrás del texto */
+    background-size: contain;
+    width: 80px;
+    height: 80px;
+    opacity: 0.3;
+    z-index: 3;
 }
 
 .formulario h2 {
@@ -51,7 +51,7 @@ body {
 }
 
 .formulario form {
-    padding: 0; /* Ya no es necesario aquí, el padding está en .formulario */
+    padding: 0; 
     box-sizing: border-box;
 }
 
@@ -64,28 +64,28 @@ form .username {
 
 .username input {
     width: 100%;
-    padding: 10px 0; /* Añadí padding vertical para más espacio */
+    padding: 10px 0;
     height: 40px;
     font-size: 16px;
     border: none;
     outline: none;
-    background: none; /* Para que el background del input no tape el label */
+    background: none;
 }
 
 .username label {
     position: absolute;
     top: 50%;
-    left: 0px; /* Posición inicial del label */
+    left: 0px;
     transform: translateY(-50%);
     font-size: 16px;
-    color: #adadad; /* Establecí el color del texto del label */
-    pointer-events: none; /* Permite hacer clic a través del label al input */
-    transition: 0.5s; /* Para la animación al enfocar */
+    color: #adadad;
+    pointer-events: none;
+    transition: 0.5s;
 }
 
 .username input:focus ~ label,
 .username input:valid ~ label {
-    top: -20px; /* Mueve el label hacia arriba al enfocar o si el input tiene contenido */
+    top: -20px;
     font-size: 12px;
     color: #bb8fce;
 }
@@ -97,28 +97,28 @@ form .password {
 }
 .password input {
     width: 100%;
-    padding: 10px 0; /* Añadí padding vertical para más espacio */
+    padding: 10px 0;
     height: 40px;
     font-size: 16px;
     border: none;
     outline: none;
-    background: none; /* Para que el background del input no tape el label */
+    background: none;
 }
 
 .password label {
     position: absolute;
     top: 50%;
-    left: 0px; /* Posición inicial del label */
+    left: 0px;
     transform: translateY(-50%);
     font-size: 16px;
-    color: #adadad; /* Establecí el color del texto del label */
-    pointer-events: none; /* Permite hacer clic a través del label al input */
-    transition: 0.5s; /* Para la animación al enfocar */
+    color: #adadad;
+    pointer-events: none;
+    transition: 0.5s;
 }
 
 .password input:focus ~ label,
 .password input:valid ~ label {
-    top: -20px; /* Mueve el label hacia arriba al enfocar o si el input tiene contenido */
+    top: -20px;
     font-size: 12px;
     color: #bb8fce;
 }
