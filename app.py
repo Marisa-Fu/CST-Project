@@ -5,11 +5,10 @@ import mysql.connector
 app = Flask(__name__)
 bcrypt = Bcrypt(app)
 
-# Connect to your MySQL database
 db = mysql.connector.connect(
     host="localhost",
     user="root",
-    password="Fightme_2005!",  # CHANGE THIS TO YOUR MySQL password
+    password="Fightme_2005!", 
     database="trivia_game"
 )
 cursor = db.cursor(dictionary=True)
