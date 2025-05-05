@@ -52,7 +52,7 @@
             .then(data => {
                 console.log(data);
                 if (data.message === "Login successful") {
-                    window.location.href = "/quiz.html";
+                    window.location.href = "http://127.0.0.1:5500/main_pg.html";
                 } else {
                     errorBox.textContent = data.error || data.message || "Something went wrong.";
                 }
