@@ -1,48 +1,58 @@
 from flask import Flask, request, jsonify
-from db_connect import connect_db
+from flask_bcrypt import Bcrypt
+import mysql.connector
 
 app = Flask(__name__)
+bcrypt = Bcrypt(app)
 
-@app.route("/user/status", methods=["GET"])
-def get_status():
-    user_id = request.args.get("user_id")
+# Connect to your MySQL database
+db = mysql.connector.connect(
+    host="localhost",
+    user="root",
+    password="your_mysql_password",  # CHANGE THIS TO YOUR MySQL password
+    database="trivia_game"
+)
+cursor = db.cursor(dictionary=True)
 
-    db = connect_db()
-    cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT cash, lives FROM users WHERE user_id = %s", (user_id,))
-    result = cursor.fetchone()
-    cursor.close()
-    db.close()
+# -------- SIGNUP --------
+@app.route('/signup', methods=['POST'])
+def signup():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
 
-    if result:
-        return jsonify({"cash": result["cash"], "lives": result["lives"]})
-    else:
-        return jsonify({"error": "User not found"}), 404
-    
-    
-@app.route("/user/buy_life", methods=["POST"])
-def buy_life():
-    user_id = request.json.get("user_id")
+    if not username or not password:
+        return jsonify({"error": "Username and password required"}), 400
 
-    db = connect_db()
-    cursor = db.cursor()
+    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
 
-    # Step 1: Check how much cash user has
-    cursor.execute("SELECT cash FROM users WHERE user_id = %s", (user_id,))
-    cash = cursor.fetchone()
-
-    if cash and cash[0] >= 100:
-        # Step 2: Deduct $100 and add 1 life
-        cursor.execute("UPDATE users SET cash = cash - 100, lives = lives + 1 WHERE user_id = %s", (user_id,))
-        
-        # Step 3: Log the transaction
-        cursor.execute("INSERT INTO transactions (user_id, type, amount) VALUES (%s, 'life_purchase', 100)", (user_id,))
-        
+    try:
+        cursor.execute("INSERT INTO users (username, password_hash) VALUES (%s, %s)", (username, hashed_password))
         db.commit()
-        cursor.close()
-        db.close()
-        return jsonify({"success": True, "message": "Life purchased!"})
+        return jsonify({"message": "Signup successful"}), 201
+    except mysql.connector.IntegrityError:
+        return jsonify({"error": "Username already taken"}), 400
+
+# -------- LOGIN --------
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+
+    cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+    user = cursor.fetchone()
+
+    if user and bcrypt.check_password_hash(user['password_hash'], password):
+        return jsonify({
+            "message": "Login successful",
+            "user_id": user['user_id'],
+            "cash": user['cash'],
+            "lives": user['lives']
+        }), 200
     else:
-        cursor.close()
-        db.close()
-        return jsonify({"success": False, "message": "Not enough cash."})
+        return jsonify({"error": "Invalid username or password"}), 401
+
+# -------- Run the app --------
+if __name__ == '__main__':
+    app.run(debug=True)
