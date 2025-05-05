@@ -4,16 +4,13 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="login.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet">
-    <title>Login - Pycode</title>
+    <link rel="stylesheet" href="login.css"> <!-- Reuse your login.css -->
+    <title>Sign Up - Pycode</title>
 </head>
 <body>
     <div class="formulario">
         <h1>Pycode</h1>
-        <h2>Login</h2>
+        <h2>Sign Up</h2>
         <form method="post">
             <div class="username">
                 <input type="text" id="username" required>
@@ -23,25 +20,29 @@
                 <input type="password" id="password" required>
                 <label>Password</label>
             </div>
-            <div class="remember">Forgot your password?</div>
-            <input type="submit" value="Log in">
+            <input type="submit" value="Sign Up">
             <div class="register">
-                I want to <a href="http://127.0.0.1:5500/sign_placer.html">make an account</a>
+                Already have an account? <a href="/templates/login.html">Log in</a>
             </div>
         </form>
 
         <div id="error-message" style="color: red; margin-top: 10px;"></div>
+        <div id="success-message" style="color: green; margin-top: 10px;"></div>
     </div>
 
     <script>
         document.querySelector("form").addEventListener("submit", function (e) {
-            e.preventDefault();
+            e.preventDefault(); // Prevent page reload
 
             const username = document.getElementById("username").value;
             const password = document.getElementById("password").value;
             const errorBox = document.getElementById("error-message");
+            const successBox = document.getElementById("success-message");
 
-            fetch("http://127.0.0.1:5000/login", {
+            errorBox.textContent = "";
+            successBox.textContent = "";
+
+            fetch("http://127.0.0.1:5000/signup", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -51,8 +52,11 @@
             .then(response => response.json())
             .then(data => {
                 console.log(data);
-                if (data.message === "Login successful") {
-                    window.location.href = "/quiz.html";
+                if (data.message === "Signup successful") {
+                    successBox.textContent = data.message;
+                    setTimeout(() => {
+                        window.location.href = "/templates/login.html";
+                    }, 1000); // Wait 1 second before redirect
                 } else {
                     errorBox.textContent = data.error || data.message || "Something went wrong.";
                 }
