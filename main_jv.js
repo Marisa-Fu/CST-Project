@@ -1,7 +1,3 @@
-function goToLevel(level) {
-    alert(`Navigating to Level ${level}...`);
-  }
-
   function openPopup() {
     document.getElementById("popup").style.display = "flex";
   }
