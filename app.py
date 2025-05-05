@@ -1,17 +1,19 @@
 from flask import Flask, request, jsonify
 from flask_bcrypt import Bcrypt
+from flask_cors import CORS
 import mysql.connector
 
 app = Flask(__name__)
 bcrypt = Bcrypt(app)
+CORS(app)
 
-db = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    password="Fightme_2005!", 
-    database="trivia_game"
-)
-cursor = db.cursor(dictionary=True)
+def get_db_connection():
+    return mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="Fightme_2005!",
+        database="trivia_game"
+    )
 
 @app.route('/signup', methods=['POST'])
 def signup():
@@ -25,11 +27,16 @@ def signup():
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
 
     try:
+        db = get_db_connection()
+        cursor = db.cursor(dictionary=True)
         cursor.execute("INSERT INTO users (username, password_hash) VALUES (%s, %s)", (username, hashed_password))
         db.commit()
         return jsonify({"message": "Signup successful"}), 201
     except mysql.connector.IntegrityError:
         return jsonify({"error": "Username already taken"}), 400
+    finally:
+        cursor.close()
+        db.close()
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -37,8 +44,14 @@ def login():
     username = data.get('username')
     password = data.get('password')
 
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+
     cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
     user = cursor.fetchone()
+
+    cursor.close()
+    db.close()
 
     if user and bcrypt.check_password_hash(user['password_hash'], password):
         return jsonify({
