@@ -55,7 +55,7 @@
                 if (data.message === "Signup successful") {
                     successBox.textContent = data.message;
                     setTimeout(() => {
-                        window.location.href = "/templates/login.html";
+                        window.location.href = "http://127.0.0.1:5500/login.html";
                     }, 1000); // Wait 1 second before redirect
                 } else {
                     errorBox.textContent = data.error || data.message || "Something went wrong.";
