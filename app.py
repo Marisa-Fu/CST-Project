@@ -9,12 +9,11 @@ bcrypt = Bcrypt(app)
 db = mysql.connector.connect(
     host="localhost",
     user="root",
-    password="your_mysql_password",  # CHANGE THIS TO YOUR MySQL password
+    password="Fightme_2005!",  # CHANGE THIS TO YOUR MySQL password
     database="trivia_game"
 )
 cursor = db.cursor(dictionary=True)
 
-# -------- SIGNUP --------
 @app.route('/signup', methods=['POST'])
 def signup():
     data = request.json
@@ -33,7 +32,6 @@ def signup():
     except mysql.connector.IntegrityError:
         return jsonify({"error": "Username already taken"}), 400
 
-# -------- LOGIN --------
 @app.route('/login', methods=['POST'])
 def login():
     data = request.json
@@ -53,6 +51,5 @@ def login():
     else:
         return jsonify({"error": "Invalid username or password"}), 401
 
-# -------- Run the app --------
 if __name__ == '__main__':
     app.run(debug=True)
