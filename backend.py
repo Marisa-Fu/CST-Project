@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = os.getenv('FLASK_SECRET_KEY', 'default_key')
+app.secret_key = os.getenv('your_secret_key', 'default_key')
 
 bcrypt = Bcrypt(app)
 CORS(app)

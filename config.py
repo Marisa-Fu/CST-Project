@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Config:
-    SECRET_KEY = os.getenv('FLASK_SECRET_KEY')
+    SECRET_KEY = os.getenv('your_secret_key')
     
     # Email configuration
     MAIL_SERVER = 'smtp.gmail.com'
