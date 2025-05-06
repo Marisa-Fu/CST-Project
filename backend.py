@@ -99,7 +99,7 @@ def signup():
                        (username, hashed_password, email))
         db.commit()
 
-        return jsonify({"message": "Signup successful"}), 201
+        return jsonify({"message": "Signup successful"}), 201  # Ensure the success message is sent here
 
     except pymysql.err.IntegrityError:
         return jsonify({"error": "Username or email already taken"}), 400
