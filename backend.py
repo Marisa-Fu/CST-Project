@@ -20,20 +20,21 @@ def signup():
     data = request.json
     username = data.get('username')
     password = data.get('password')
+    email = data.get('email')
 
-    if not username or not password:
-        return jsonify({"error": "Username and password required"}), 400
+    if not username or not password or not email:
+        return jsonify({"error": "Username, password, and email are required"}), 400
 
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
 
     try:
         db = get_db_connection()
         cursor = db.cursor(dictionary=True)
-        cursor.execute("INSERT INTO users (username, password_hash) VALUES (%s, %s)", (username, hashed_password))
+        cursor.execute("INSERT INTO users (username, password_hash, email) VALUES (%s, %s, %s)", (username, hashed_password, email))
         db.commit()
         return jsonify({"message": "Signup successful"}), 201
     except mysql.connector.IntegrityError:
-        return jsonify({"error": "Username already taken"}), 400
+        return jsonify({"error": "Username or email already taken"}), 400
     finally:
         cursor.close()
         db.close()

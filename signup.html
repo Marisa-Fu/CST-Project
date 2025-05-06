@@ -5,9 +5,9 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="signup.css">
-    <link rel="preconnect" href=https://fonts.googleapis.com>
-    <link rel="preconnect" href=https://fonts.gstatic.com crossorigin>
-    <link href=https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,200..900;1,200..900&display=swap rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet">
     <title>Document</title>
 </head>
 
@@ -17,18 +17,18 @@
         <h2>Create an Account</h2>
         <form method="post">
             <div class="email">
-                <input type="email" required>
+                <input type="email" id="email" required>
                 <label>Email</label>
             </div>
             <div class="username">
-                <input type="text" required>
+                <input type="text" id="username" required>
                 <label>User name</label>
             </div>
             <div class="password">
-                <input type="password" required>
+                <input type="password" id="password" required>
                 <label>Password</label>
             </div>
-            <input type="submit" value="Sing Up">
+            <input type="submit" value="Sign Up">
             <div class="register">
                 Already have an account? <a href="http://127.0.0.1:5500/login.html">Log in</a>
             </div>
@@ -42,6 +42,7 @@
         document.querySelector("form").addEventListener("submit", function (e) {
             e.preventDefault(); // Prevent page reload
 
+            const email = document.getElementById("email").value;
             const username = document.getElementById("username").value;
             const password = document.getElementById("password").value;
             const errorBox = document.getElementById("error-message");
@@ -55,7 +56,7 @@
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({ username, password })
+                body: JSON.stringify({ username, password, email })
             })
             .then(response => response.json())
             .then(data => {
@@ -77,9 +78,3 @@
     </script>
 </body>
 </html>
-
-        </form>
-
-    </div>
-
-</body>
