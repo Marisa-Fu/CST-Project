@@ -14,7 +14,7 @@ function confirmLogout(confirm) {
     popup.style.display = "none";
     if (confirm) {
         // You can redirect or perform logout action here
-        window.location.href = "/login";
+        alert("You have been logged out.");
         // window.location.href = "/login"; // Optional redirect
     }
 }
@@ -83,7 +83,6 @@ let timeLeft = 10;  // Changed to 10 seconds
 let countdownInterval;
 let quizEnded = false;
 
-
 // Quiz elements
 const questionContainer = document.getElementById('question-container');
 const resultsContainer = document.getElementById('results-container');
@@ -94,7 +93,6 @@ const quizTitle = document.getElementById('quiz-title');
 const countdownDisplay = document.getElementById('countdown');
 const timerDisplay = document.getElementById('timer-seconds');
 const resultsSummary = document.getElementById('results-summary').querySelector('tbody');
-
 
 // Function to display the current question
 function displayQuestion() {
@@ -142,18 +140,15 @@ function handleOptionSelect(selectedOption) {
         currentQuestionIndex++;
         timeLeft = 10;
         displayQuestion();
-    }
-     else {
+    } else {
         calculateScore();
         showResults();
     }
 }
 
-
-
 // Function to calculate the user's score
 function calculateScore() {
-   // No need to calculate again, the score is updated on every correct answer.
+    // No need to calculate again, the score is updated on every correct answer.
 }
 
 // Function to display the results container
@@ -166,11 +161,10 @@ function showResults() {
     displayQuizSummary();
 }
 
+// Function to display the quiz summary in a table
 function displayQuizSummary() {
     resultsSummary.innerHTML = '';
-    // Omit the last question from the results
-    for (let index = 0; index < quizData.length - 1; index++) {
-        const question = quizData[index];
+    quizData.forEach((question, index) => {
         const row = document.createElement('tr');
         const questionCell = document.createElement('td');
         questionCell.textContent = question.question;
@@ -183,10 +177,9 @@ function displayQuizSummary() {
 
         const resultCell = document.createElement('td');
         resultCell.textContent = userAnswers[index] === question.correctAnswer ? 'Correct' : 'Incorrect';
-        if(userAnswers[index] === question.correctAnswer){
+        if (userAnswers[index] === question.correctAnswer) {
             resultCell.style.color = 'green';
-        }
-        else{
+        } else {
             resultCell.style.color = 'red';
         }
 
@@ -195,7 +188,7 @@ function displayQuizSummary() {
         row.appendChild(correctAnswerCell);
         row.appendChild(resultCell);
         resultsSummary.appendChild(row);
-    }
+    });
 }
 
 // Function to restart the quiz
@@ -204,8 +197,8 @@ function restartQuiz() {
     score = 0;
     userAnswers = [];
     resultsContainer.classList.add('hidden');
-    questionContainer.classList.add('hidden');
-    quizTitle.textContent = "Which Topic Are You Doing?";
+    questionContainer.classList.remove('hidden');
+    quizTitle.textContent = "Level 2: Loops & text files";
     quizStarted = false;
     timeLeft = 10; // Reset timer
     quizEnded = false;
@@ -245,7 +238,6 @@ function handleNextQuestion() {
         showResults();
     }
 }
-
 
 function startQuiz() {
     if (!quizStarted) {
