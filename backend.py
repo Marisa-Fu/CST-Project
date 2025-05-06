@@ -1,33 +1,65 @@
-from flask import Flask, request, jsonify, session
+from flask import Flask, request, jsonify, session, render_template
 from flask_bcrypt import Bcrypt
 from flask_cors import CORS
 from flask_mail import Mail, Message
-import mysql.connector
+import pymysql
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key_here'
+app.secret_key = os.getenv('FLASK_SECRET_KEY', 'default_key')
 
 bcrypt = Bcrypt(app)
 CORS(app)
 
-## making an email
+# Email configuration
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'pycodequiz@gmail.com' 
-app.config['MAIL_PASSWORD'] = 'kdolnxgfzrutiomo'    
-app.config['MAIL_DEFAULT_SENDER'] = 'pycodequiz@gmail.com'
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER')
 
 mail = Mail(app)
 
+# Database connection
 def get_db_connection():
-    return mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="Fightme_2005!",
-        database="trivia_game"
+    return pymysql.connect(
+        host=os.getenv('DB_HOST'),
+        user=os.getenv('DB_USER'),
+        password=os.getenv('DB_PASSWORD'),
+        database=os.getenv('DB_NAME'),
+        cursorclass=pymysql.cursors.DictCursor
     )
 
+# Routes for rendering HTML pages
+@app.route('/')
+def home():
+    return render_template('main_pg.html')
+
+@app.route('/login')
+def login_page():
+    return render_template('login.html')
+
+@app.route('/signup_page')
+def signup_page():
+    return render_template('signup.html')
+
+@app.route('/level1')
+def level1_page():
+    return render_template('LVL-1.html')
+
+@app.route('/level2')
+def level2_page():
+    return render_template('LVL-2.html')
+
+@app.route('/level3')
+def level3_page():
+    return render_template('LVL-3.html')
+
+# Signup route
 @app.route('/signup', methods=['POST'])
 def signup():
     data = request.json
@@ -40,32 +72,39 @@ def signup():
 
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
 
+    db = None
+    cursor = None
+
     try:
         db = get_db_connection()
-        cursor = db.cursor(dictionary=True)
-        cursor.execute("INSERT INTO users (username, password_hash, email, cash, lives) VALUES (%s, %s, %s, 500, 0)", (username, hashed_password, email))
+        cursor = db.cursor()
+        cursor.execute("INSERT INTO users (username, password_hash, email, cash, lives) VALUES (%s, %s, %s, 500, 0)",
+                       (username, hashed_password, email))
         db.commit()
 
-        # Send confirmation email
-        msg = Message('Welcome to Trivia Game!', recipients=[email])
-        msg.body = f"Hi {username},\n\nThank you for signing up! You received $500 virtual currency to start playing.\n\nEnjoy!"
-        mail.send(msg)
-
         return jsonify({"message": "Signup successful"}), 201
-    except mysql.connector.IntegrityError:
-        return jsonify({"error": "Username or email already taken"}), 400
-    finally:
-        cursor.close()
-        db.close()
 
-@app.route('/login', methods=['POST'])
+    except pymysql.err.IntegrityError:
+        return jsonify({"error": "Username or email already taken"}), 400
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        if cursor:
+            cursor.close()
+        if db:
+            db.close()
+
+# Login route
+@app.route('/login_submit', methods=['POST'])
 def login():
     data = request.json
     username = data.get('username')
     password = data.get('password')
 
     db = get_db_connection()
-    cursor = db.cursor(dictionary=True)
+    cursor = db.cursor()
 
     cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
     user = cursor.fetchone()
@@ -84,12 +123,13 @@ def login():
     else:
         return jsonify({"error": "Invalid username or password"}), 401
 
+# Get balance
 @app.route('/get_balance', methods=['GET'])
 def get_balance():
     user_id = session.get('user_id')
     if user_id:
         db = get_db_connection()
-        cursor = db.cursor(dictionary=True)
+        cursor = db.cursor()
         cursor.execute("SELECT cash, lives FROM users WHERE user_id = %s", (user_id,))
         balance = cursor.fetchone()
         cursor.close()
@@ -98,13 +138,14 @@ def get_balance():
     else:
         return jsonify({'error': 'User not logged in'}), 400
 
+# Purchase life
 @app.route('/purchase_life', methods=['POST'])
 def purchase_life():
     user_id = request.json.get('user_id')
 
     try:
         db = get_db_connection()
-        cursor = db.cursor(dictionary=True)
+        cursor = db.cursor()
         cursor.execute("SELECT cash, lives, email FROM users WHERE user_id = %s", (user_id,))
         user = cursor.fetchone()
 
@@ -117,7 +158,6 @@ def purchase_life():
             cursor.execute("UPDATE users SET cash = %s, lives = %s WHERE user_id = %s", (new_cash, new_lives, user_id))
             db.commit()
 
-            # Send email confirmation
             msg = Message('Life Purchased', recipients=[user['email']])
             msg.body = "You successfully purchased a life for $100. Good luck on your next quiz!"
             mail.send(msg)
@@ -125,12 +165,13 @@ def purchase_life():
             return jsonify({"message": "Life purchased successfully"}), 200
         else:
             return jsonify({"error": "Not enough cash to purchase a life"}), 400
-    except mysql.connector.Error as err:
+    except Exception as err:
         return jsonify({"error": str(err)}), 500
     finally:
         cursor.close()
         db.close()
 
+# Earn cash from quiz
 @app.route('/earn_cash', methods=['POST'])
 def earn_cash():
     user_id = session.get('user_id')
@@ -147,7 +188,7 @@ def earn_cash():
             reward = 150 if score == 10 else 75 if score >= 6 else 0
 
         db = get_db_connection()
-        cursor = db.cursor(dictionary=True)
+        cursor = db.cursor()
         cursor.execute("UPDATE users SET cash = cash + %s WHERE user_id = %s", (reward, user_id))
         db.commit()
         cursor.execute("INSERT INTO transactions (user_id, type, amount) VALUES (%s, %s, %s)", (user_id, 'quiz_reward', reward))
@@ -159,12 +200,13 @@ def earn_cash():
 
     return jsonify({'error': 'User not logged in'}), 400
 
+# Take a quiz
 @app.route('/take_quiz', methods=['POST'])
 def take_quiz():
     user_id = session.get('user_id')
     if user_id:
         db = get_db_connection()
-        cursor = db.cursor(dictionary=True)
+        cursor = db.cursor()
         cursor.execute("SELECT lives FROM users WHERE user_id = %s", (user_id,))
         lives = cursor.fetchone()['lives']
 
@@ -181,13 +223,14 @@ def take_quiz():
     else:
         return jsonify({'error': 'User not logged in'}), 400
 
+# Forgot password
 @app.route('/forgot_password', methods=['POST'])
 def forgot_password():
     data = request.json
     email = data.get('email')
 
     db = get_db_connection()
-    cursor = db.cursor(dictionary=True)
+    cursor = db.cursor()
     cursor.execute("SELECT username FROM users WHERE email = %s", (email,))
     user = cursor.fetchone()
 
@@ -201,18 +244,14 @@ def forgot_password():
     else:
         return jsonify({'error': 'Email not found'}), 404
 
-if __name__ == '__main__':
-    app.run(debug=True)
-
-# test mail
+# Username availability check
 @app.route('/check_username', methods=['POST'])
 def check_username():
     data = request.json
     username = data.get('username')
 
-    # ts checks if username already exists in the database
     db = get_db_connection()
-    cursor = db.cursor(dictionary=True)
+    cursor = db.cursor()
     cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
     user = cursor.fetchone()
 
@@ -223,3 +262,6 @@ def check_username():
         return jsonify({"available": False})
     else:
         return jsonify({"available": True})
+
+if __name__ == '__main__':
+    app.run(debug=True)

@@ -1,4 +1,3 @@
-// Your existing functions for popup and logout
 function openPopup() {
   document.getElementById("popup").style.display = "flex";
 }
@@ -14,7 +13,7 @@ function confirmLogout(confirm) {
   popup.style.display = "none";
   if (confirm) {
       // You can redirect or perform logout action here
-      window.location.href = "http://127.0.0.1:5500/login.html";
+      window.location.href = "/login";
       // window.location.href = "/login"; // Optional redirect
   }
 }
@@ -22,81 +21,54 @@ function confirmLogout(confirm) {
 // Quiz data
 const quizData = [
   {
-      question: "1.Which of the following statements accurately describes a fundamental difference between Python lists and dictionaries? ",
-      options: ["Lists are mutable sequences, while dictionaries are immutable mappings", 
-        "Lists store elements in a specific, ordered sequence accessed by integer indices, while dictionaries store key-value pairs accessed by unique keys", 
-        "Dictionaries can only contain elements of the same data type, whereas lists can contain elements of mixed data types",
-         "Lists are generally more efficient for looking up specific elements than dictionaries"],
-      correctAnswer: "Lists store elements in a specific, ordered sequence accessed by integer indices, while dictionaries store key-value pairs accessed by unique keys"
+      question: "1. What is Python?",
+      options: ["A type of snake", "A software used exclusively for video game graphics", "A website used for downloading movies", "A high-level programming language used for many different types of applications"],
+      correctAnswer: "A high-level programming language used for many different types of applications"
   },
   {
-    question: `<pre style="display: inline;">my_dict = {'a': 1, 'b': 2, 'c': 3}\nresult = my_dict.get('d', my_dict.pop('b'))</pre> 2. What will be the value of result and what will my_dict contain after executing this code?`,
-    options: ["result will be 2, and my_dict will be {'a': 1, 'c': 3, 'd': 2}",
-       "result will be None, and my_dict will be {'a': 1, 'c': 3} ",
-        "result will be 2, and my_dict will be {'a': 1, 'c': 3} ",
-        "The code will give KeyError"],
-    correctAnswer: "result will be 2, and my_dict will be {'a': 1, 'c': 3} "
+      question: "2. What does the ‘print()’ function do? ",
+      options: ["It sends a document to your nearest printer", "It plays an alert anytime a variable is updated", "It displays what is inputted between the parentheses", "It draws a picture on the screen"],
+      correctAnswer: "It displays what is inputted between the parentheses"
   },
   {
-      question: `<pre style="display: inline; "my_list = [1, 2, 3, 4]\nnew_list = my_list[1:-1]\nnew_list[0] = 5\nfinal_list = my_list + new_list</pre> 3. What will be the value of final_list after executing this code?"`,
-      options: ["[1, 2, 3, 4, 5, 3]", 
-        "[1, 5, 3, 4, 5, 3]", 
-        "[1, 2, 3, 4, 2, 3]", 
-        "[1, 2, 3, 4, 5]"],
-      correctAnswer: "[1, 2, 3, 4, 5, 3] "
+      question: "3. What is an Algorithm?",
+      options: ["A specific solution to a specific problem", "A step-by-step process for solving a general class of problems", "A random sequence of instructions", "A type of computer hardware"],
+      correctAnswer: "A step-by-step process for solving a general class of problems"
   },
   {
-      question: "4.You want to create a function that sometimes returns a value and sometimes doesn't, depending on a secret internal calculation. If it doesn't explicitly return anything, what does Python implicitly return?",
-      options: ["False", "None", "An empty tuple ()", "It raises a SilentReturnError that you never see"],
-      correctAnswer: "None"
+      question: "4.What will this code output? \n print(“Hello” + “World”)",
+      options: ["Hello World", "HelloWorld", "Hello+World", "Hello World!"],
+      correctAnswer: "HelloWorld"
   },
   {
-      question: "5.What is the main purpose of the 'if __name__ == '__main__': block in a Python script?",
-      options: ["To define the main function of the script ",
-         "To ensure that certain code only runs when the script is executed directly (not when it's imported as a module)",
-         "To prevent errors when the script is imported", 
-         "To prevent errors when the script is exported"],
-      correctAnswer: "To ensure that certain code only runs when the script is executed directly (not when it's imported as a module)"
+      question: "5. What is a variable?",
+      options: ["A button that restarts the computer", "A way to store and label data in a program", "A type of error message", "A shortcut for printing text on the screen"],
+      correctAnswer: "A way to store and label data in a program"
   },
   {
-      question: "6.Consider a recursive function designed to calculate the factorial of a non-negative integer n. Which of the following are essential components for this function to work correctly?",
-      options: ["A conditional statement that checks if n is equal to 0 (the base case)",
-         "A recursive call to the same function with a modified input that moves towards the base case (e.g., n-1)",
-         "A loop that iterates from 1 to n to perform the multiplication",
-         "A return statement that provides the factorial value for the base case (e.g., returning 1 when n is 0)",
-         "The use of global variables to store intermediate calculation results",
-         "Calling a different helper function to handle the base case"],
-      correctAnswer: ["A conditional statement that checks if n is equal to 0 (the base case)",
-        "A recursive call to the same function with a modified input that moves towards the base case (e.g., n-1)", 
-        "A return statement that provides the factorial value for the base case (e.g., returning 1 when n is 0)" ]
+      question: "6. What is a data type?",
+      options: ["A category that defines what kind of value a variable holds", "A kind of error that stops your code from running", "A tool used to draw graphics on your computer", "A Python file that stores secret passwords"],
+      correctAnswer: "A category that defines what kind of value a variable holds"
   },
   {
-      question: "7.Consider the base cases in the provided Fibonacci function (if n <= 0: return 0 and elif n == 1: return n). What is their primary purpose in the recursive process?",
-      options: ["To define the starting values of the Fibonacci sequence",
-         "To prevent the function from calling itself infinitely",
-         "To optimize the calculation for small values of n", "To handle invalid negative inputs",
-         "To ensure that the function returns a value for all possible non-negative integer inputs",
-         "To guide the recursive calls towards simpler subproblems"],
-      correctAnswer: ["To prevent the function from calling itself infinitely","To ensure that the function returns a value for all possible non-negative integer inputs",
-        "To guide the recursive calls towards simpler subproblems"]
+      question: "7. Which of the following are data type examples?",
+      options: ["int, float, str, bool", "print, input, len, type", "for, while, if, else", "True, False, None, break"],
+      correctAnswer: "int, float, str, bool"
   },
   {
-      question: "8.What is the purpose of the self parameter in class methods?",
-      options: ["It refers to a global variable", "It refers to the class itself",
-         " It refers to the specific instance of the object calling the method",
-        "It refers to another class being inherited"],
-      correctAnswer: "It refers to the specific instance of the object calling the methods"
+      question: "8. Which is an example of a string datatype? ",
+      options: ["42", "‘Python’", "False", "3.143"],
+      correctAnswer: "‘Python’"
   },
   {
-      question: "9. What is the purpose of the init method in a Python class?",
-      options: ["It deletes objects", "It initializes an objects attributes",
-         "It is used to inherit from another class", "It is used to inherit from another class"],
-      correctAnswer: "It initializes an objects attributes"
+      question: "9. What is the purpose of an end-of-line comment in Python?",
+      options: ["To end a line of code with a semicolon", "To add a comment that Python will ignore, starting with a #", "To stop the program from running", "To print hidden text to the user"],
+      correctAnswer: "To add a comment that Python will ignore, starting with a #"
   },
   {
-      question: `<pre style="display: "nums = [1, 2, 3, 4]\nsquared = list(map(lambda x: x ** 2, nums))\nprint(squared)</pre> 10. What is the output of the following code?"`,
-      options: ["1, 2, 3, 4]", "[1, 4, 9, 16]", "[2, 4, 6, 8]", "Error"],
-      correctAnswer: "[1, 4, 9, 16]"
+      question: "10. What is the correct way to take user input in Python?",
+      options: ["scan(input)", "get.input()", "input()", "read.input()"],
+      correctAnswer: "input()"
   }
 ];
 
@@ -130,7 +102,7 @@ function displayQuestion() {
 
   const questionElement = document.createElement('h2');
   questionElement.className = 'text-xl font-semibold mb-4 text-center special-gothic';
-  questionElement.innerHTML = currentQuestion.question;
+  questionElement.textContent = currentQuestion.question;
 
   const optionsElement = document.createElement('div');
   optionsElement.className = 'options-container';
@@ -263,7 +235,7 @@ function startQuestionTimer() {
 }
 
 function handleNextQuestion() {
-  if (currentQuestionIndex < quizData.length - 2) {
+  if (currentQuestionIndex < quizData.length - 1) {
       currentQuestionIndex++;
       timeLeft = 10;
       displayQuestion();
@@ -291,6 +263,7 @@ function startQuiz() {
               quizStarted = true;
               document.querySelectorAll('main > :not(#countdown)').forEach(el => el.style.display = '');
               questionContainer.classList.remove('hidden');
+              timerDisplay.classList.remove('hidden');
               displayQuestion();
           }
       }, 1000);
@@ -300,5 +273,4 @@ function startQuiz() {
   }
 }
 
-// Start the quiz when the page loads
 startQuiz();

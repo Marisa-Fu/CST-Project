@@ -1,12 +1,14 @@
-body {
-  font-family: 'Inter', sans-serif;
-}
-
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
   font-family: 'Segoe UI', 'Courier New', Courier, monospace;
+  
+  body {
+  font-family: 'Inter', sans-serif;
+}
+
+
 }
 
 body {
@@ -25,7 +27,7 @@ body::before {
   left: 0;
   width: 100%;
   height: 100%;
-  background-image: url('../CST-Project/04_11_2025_X-Design\ \(1\).png');
+  background-image: url('../images/design_04112025.png');
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
@@ -240,9 +242,9 @@ main h1 {
   left: 50%;
   transform: translate(-50%, -50%);
   font-size: 5rem;
-  color: black;
+  color: magenta;
   z-index: 1000;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Special Gothic Regular', cursive;
 }
 .special-gothic {
    font-family: 'Special Gothic Regular', cursive;

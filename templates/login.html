@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="login.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet">
@@ -14,7 +14,7 @@
     <div class="formulario">
         <h1>Pycode</h1>
         <h2>Login</h2>
-        <form method="post">
+        <form id="login-form" method="post">
             <div class="username">
                 <input type="text" id="username" required>
                 <label>User name</label>
@@ -26,7 +26,7 @@
             <div class="remember">Forgot your password?</div>
             <input type="submit" value="Log in">
             <div class="register">
-                I want to <a href="http://127.0.0.1:5500/signup.html">make an account</a>
+                I want to <a href="{{ url_for('signup_page') }}">make an account</a>
             </div>
         </form>
 
@@ -34,14 +34,14 @@
     </div>
 
     <script>
-        document.querySelector("form").addEventListener("submit", function (e) {
+        document.getElementById("login-form").addEventListener("submit", function (e) {
             e.preventDefault();
 
             const username = document.getElementById("username").value;
             const password = document.getElementById("password").value;
             const errorBox = document.getElementById("error-message");
 
-            fetch("http://127.0.0.1:5000/login", {
+            fetch("http://127.0.0.1:5000/login_submit", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -52,7 +52,7 @@
             .then(data => {
                 console.log(data);
                 if (data.message === "Login successful") {
-                    window.location.href = "http://127.0.0.1:5500/main_pg.html";
+                    window.location.href = "/";
                 } else {
                     errorBox.textContent = data.error || data.message || "Something went wrong.";
                 }
