@@ -205,3 +205,57 @@ if __name__ == '__main__':
     app.run(debug=True)
 
 # test mail
+@app.route('/check_username', methods=['POST'])
+def check_username():
+    data = request.json
+    username = data.get('username')
+
+    # Check if username already exists in the database
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+    user = cursor.fetchone()
+
+    cursor.close()
+    db.close()
+
+    if user:
+        return jsonify({"available": False})
+    else:
+        return jsonify({"available": True})
+    
+@app.route('/signup', methods=['POST'])
+def signup():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+    email = data.get('email')
+
+    # Password validation (same regex from JS to double check)
+    password_regex = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$"
+    if not re.match(password_regex, password):
+        return jsonify({"error": "Password must be at least 8 characters, contain at least one uppercase letter, one lowercase letter, and one special character."}), 400
+
+    # Check if username already exists in the database
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+    user = cursor.fetchone()
+
+    if user:
+        cursor.close()
+        db.close()
+        return jsonify({"error": "Username already taken"}), 400
+
+    # Hash the password and insert new user into the database
+    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+    try:
+        cursor.execute("INSERT INTO users (username, password_hash, email) VALUES (%s, %s, %s)", 
+                       (username, hashed_password, email))
+        db.commit()
+        return jsonify({"message": "Signup successful"}), 201
+    except mysql.connector.Error as err:
+        return jsonify({"error": f"Error: {err}"}), 500
+    finally:
+        cursor.close()
+        db.close()
