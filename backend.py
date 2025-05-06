@@ -83,30 +83,32 @@ def get_balance():
 
 @app.route('/purchase_life', methods=['POST'])
 def purchase_life():
-    user_id = session.get('user_id')
-    if user_id:
+    user_id = request.json.get('user_id')  # Assuming user_id is passed in
+
+    # Check if user has enough cash
+    try:
         db = get_db_connection()
         cursor = db.cursor(dictionary=True)
-        cursor.execute("SELECT cash FROM users WHERE user_id = %s", (user_id,))
-        current_cash = cursor.fetchone()[0]
+        cursor.execute("SELECT cash, lives FROM users WHERE user_id = %s", (user_id,))
+        user = cursor.fetchone()
 
-        if current_cash >= 100:  # Assuming lives cost $100
-            cursor.execute("UPDATE users SET cash = cash - 100, lives = lives + 1 WHERE user_id = %s", (user_id,))
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        if user['cash'] >= 100:  # Check if user has enough cash
+            # Deduct cash and add lives
+            new_cash = user['cash'] - 100
+            new_lives = user['lives'] + 1
+            cursor.execute("UPDATE users SET cash = %s, lives = %s WHERE user_id = %s", (new_cash, new_lives, user_id))
             db.commit()
-
-            # Record the transaction
-            cursor.execute("INSERT INTO transactions (user_id, type, amount) VALUES (%s, %s, %s)", (user_id, 'life_purchase', 100))
-            db.commit()
-
-            cursor.close()
             db.close()
-            return jsonify({'message': 'Life purchased successfully'})
+
+            return jsonify({"message": "Life purchased successfully"}), 200
         else:
-            cursor.close()
-            db.close()
-            return jsonify({'error': 'Not enough cash'}), 400
-    else:
-        return jsonify({'error': 'User not logged in'}), 400
+            return jsonify({"error": "Not enough cash to purchase a life"}), 400
+    except mysql.connector.Error as err:
+        return jsonify({"error": str(err)}), 500
+
 
 @app.route('/earn_cash', methods=['POST'])
 def earn_cash():

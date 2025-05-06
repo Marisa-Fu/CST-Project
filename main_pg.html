@@ -26,7 +26,6 @@
         <div style="margin-top: 1.5rem;">
           <button onclick="confirmLogout(true)" class="logout-btn" style="background-color: #f7dc6f;">Yes</button>
           <button onclick="confirmLogout(false)" class="logout-btn" style="background-color: #3498db; margin-left: 1rem;">No</button>
-        
         </div>
       </div>
     </div>
@@ -36,11 +35,15 @@
       <button class="level-btn" onclick="location.href='http://127.0.0.1:5500/LVL-2.html'">Level 2</button>
       <button class="level-btn" onclick="location.href='http://127.0.0.1:5500/LVL-3.html'">Level 3</button>
     </div>
+
+    <!-- Popup for Lives and Cash -->
     <div id="popup" class="popup-overlay">
       <div class="popup-content">
         <span class="close-btn" onclick="closePopup()">&times;</span>
-        <h2>Your Lives!</h2>
-        <p>These are the lives and cash that you have.</p>
+        <h2>Your Balance</h2>
+        <p id="cash-display">Cash: $0</p>
+        <p id="lives-display">Lives: 0</p>
+        <button id="purchase-life-btn" onclick="purchaseLife()">Purchase Life for $100</button>
       </div>
     </div>
   </main>
