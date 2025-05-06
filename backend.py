@@ -223,4 +223,3 @@ def check_username():
         return jsonify({"available": False})
     else:
         return jsonify({"available": True})
-    
