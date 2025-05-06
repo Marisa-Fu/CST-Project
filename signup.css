@@ -340,3 +340,10 @@ input[type="submit"]:hover {
     transition: .5s;
 
 }
+
+.password-requirements {
+    display: block;
+    margin-top: 5px;
+    font-size: 12px;
+    color: #666;
+}
