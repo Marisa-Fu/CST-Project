@@ -1,13 +1,24 @@
 from flask import Flask, request, jsonify, session
 from flask_bcrypt import Bcrypt
 from flask_cors import CORS
+from flask_mail import Mail, Message
 import mysql.connector
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key_here'  # Secret key for session handling
-bcrypt = Bcrypt(app)
+app.secret_key = 'your_secret_key_here'
 
+bcrypt = Bcrypt(app)
 CORS(app)
+
+# Email configuration
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'your_email@gmail.com'  # Replace with your email
+app.config['MAIL_PASSWORD'] = 'your_app_password'     # Replace with your app password
+app.config['MAIL_DEFAULT_SENDER'] = 'your_email@gmail.com'
+
+mail = Mail(app)
 
 def get_db_connection():
     return mysql.connector.connect(
@@ -32,13 +43,14 @@ def signup():
     try:
         db = get_db_connection()
         cursor = db.cursor(dictionary=True)
-        
-        # Set default cash to 500 and lives to 0 when creating a user
-        cursor.execute(
-            "INSERT INTO users (username, password_hash, email, cash, lives) VALUES (%s, %s, %s, 500, 0)", 
-            (username, hashed_password, email)
-        )
+        cursor.execute("INSERT INTO users (username, password_hash, email, cash, lives) VALUES (%s, %s, %s, 500, 0)", (username, hashed_password, email))
         db.commit()
+
+        # Send confirmation email
+        msg = Message('Welcome to Trivia Game!', recipients=[email])
+        msg.body = f"Hi {username},\n\nThank you for signing up! You received $500 virtual currency to start playing.\n\nEnjoy!"
+        mail.send(msg)
+
         return jsonify({"message": "Signup successful"}), 201
     except mysql.connector.IntegrityError:
         return jsonify({"error": "Username or email already taken"}), 400
@@ -62,7 +74,7 @@ def login():
     db.close()
 
     if user and bcrypt.check_password_hash(user['password_hash'], password):
-        session['user_id'] = user['user_id']  # Save user_id to session
+        session['user_id'] = user['user_id']
         return jsonify({
             "message": "Login successful",
             "user_id": user['user_id'],
@@ -82,44 +94,42 @@ def get_balance():
         balance = cursor.fetchone()
         cursor.close()
         db.close()
-        return jsonify({'cash': balance[0], 'lives': balance[1]})
+        return jsonify({'cash': balance['cash'], 'lives': balance['lives']})
     else:
         return jsonify({'error': 'User not logged in'}), 400
 
 @app.route('/purchase_life', methods=['POST'])
 def purchase_life():
-    user_id = request.json.get('user_id')  # Assuming user_id is passed in
+    user_id = request.json.get('user_id')
 
-    # Check if user has enough cash
     try:
         db = get_db_connection()
         cursor = db.cursor(dictionary=True)
-        cursor.execute("SELECT cash, lives FROM users WHERE user_id = %s", (user_id,))
+        cursor.execute("SELECT cash, lives, email FROM users WHERE user_id = %s", (user_id,))
         user = cursor.fetchone()
 
         if not user:
             return jsonify({"error": "User not found"}), 404
 
-        if user['cash'] >= 100:  # Check if user has enough cash
-            # Deduct cash and add lives
+        if user['cash'] >= 100:
             new_cash = user['cash'] - 100
             new_lives = user['lives'] + 1
             cursor.execute("UPDATE users SET cash = %s, lives = %s WHERE user_id = %s", (new_cash, new_lives, user_id))
             db.commit()
-            db.close()
 
-            # Record the transaction
-            cursor = db.cursor()
-            cursor.execute("INSERT INTO transactions (user_id, type, amount) VALUES (%s, %s, %s)", 
-                           (user_id, 'life_purchase', 100))
-            db.commit()
-            db.close()
+            # Send email confirmation
+            msg = Message('Life Purchased', recipients=[user['email']])
+            msg.body = "You successfully purchased a life for $100. Good luck on your next quiz!"
+            mail.send(msg)
 
             return jsonify({"message": "Life purchased successfully"}), 200
         else:
             return jsonify({"error": "Not enough cash to purchase a life"}), 400
     except mysql.connector.Error as err:
         return jsonify({"error": str(err)}), 500
+    finally:
+        cursor.close()
+        db.close()
 
 @app.route('/earn_cash', methods=['POST'])
 def earn_cash():
@@ -130,34 +140,21 @@ def earn_cash():
         reward = 0
 
         if level == 1:
-            if score == 10:
-                reward = 50
-            elif score >= 6:
-                reward = 25
+            reward = 50 if score == 10 else 25 if score >= 6 else 0
         elif level == 2:
-            if score == 10:
-                reward = 100
-            elif score >= 6:
-                reward = 50
+            reward = 100 if score == 10 else 50 if score >= 6 else 0
         elif level == 3:
-            if score == 10:
-                reward = 150
-            elif score >= 6:
-                reward = 75
+            reward = 150 if score == 10 else 75 if score >= 6 else 0
 
-        # Update user's cash
         db = get_db_connection()
         cursor = db.cursor(dictionary=True)
         cursor.execute("UPDATE users SET cash = cash + %s WHERE user_id = %s", (reward, user_id))
         db.commit()
-
-        # Record the transaction
-        cursor.execute("INSERT INTO transactions (user_id, type, amount) VALUES (%s, %s, %s)",
-                       (user_id, 'quiz_reward', reward))
+        cursor.execute("INSERT INTO transactions (user_id, type, amount) VALUES (%s, %s, %s)", (user_id, 'quiz_reward', reward))
         db.commit()
-
         cursor.close()
         db.close()
+
         return jsonify({'message': f'You earned {reward} cash!'})
 
     return jsonify({'error': 'User not logged in'}), 400
@@ -169,7 +166,7 @@ def take_quiz():
         db = get_db_connection()
         cursor = db.cursor(dictionary=True)
         cursor.execute("SELECT lives FROM users WHERE user_id = %s", (user_id,))
-        lives = cursor.fetchone()[0]
+        lives = cursor.fetchone()['lives']
 
         if lives > 0:
             cursor.execute("UPDATE users SET lives = lives - 1 WHERE user_id = %s", (user_id,))
@@ -183,6 +180,26 @@ def take_quiz():
             return jsonify({'error': 'Not enough lives'}), 400
     else:
         return jsonify({'error': 'User not logged in'}), 400
+
+@app.route('/forgot_password', methods=['POST'])
+def forgot_password():
+    data = request.json
+    email = data.get('email')
+
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("SELECT username FROM users WHERE email = %s", (email,))
+    user = cursor.fetchone()
+
+    if user:
+        msg = Message('Password Reset Request', recipients=[email])
+        msg.body = (
+            f"Hi {user['username']},\n\nIf you forgot your password, please contact support or visit your profile to change it securely.\n\nThis is an automated message."
+        )
+        mail.send(msg)
+        return jsonify({'message': 'Password reset email sent.'}), 200
+    else:
+        return jsonify({'error': 'Email not found'}), 404
 
 if __name__ == '__main__':
     app.run(debug=True)
