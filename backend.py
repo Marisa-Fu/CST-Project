@@ -41,16 +41,14 @@ def home():
         return redirect(url_for('login_page'))  # Redirect to login if not logged in
     return render_template('main_pg.html')
 
-@app.route('/login')
+@app.route('/login', methods=['GET'])
 def login_page():
-    if 'user_id' in session:
-        return redirect(url_for('home'))  # Already logged in
-    return render_template('login.html')
+        return render_template('login.html')
 
 @app.route('/signup_page')
 def signup_page():
     if 'user_id' in session:
-        return redirect(url_for('home'))  # Already logged in
+        return redirect(url_for('login_page'))  # Already logged in
     return render_template('signup.html')
 
 @app.route('/logout')
@@ -113,9 +111,8 @@ def signup():
         if db:
             db.close()
 
-# Login route
 @app.route('/login_submit', methods=['POST'])
-def login():
+def login_submit():
     data = request.json
     username = data.get('username')
     password = data.get('password')

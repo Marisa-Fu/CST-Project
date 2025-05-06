@@ -36,7 +36,7 @@
             <input type="submit" value="Sign Up" />
             <div class="register">
                 Already have an account? 
-                <a href="http://127.0.0.1:5000/login">Log in</a>
+                <a href="{{ url_for('login_page') }}">Log in</a>
             </div>
         </form>
 
@@ -82,7 +82,7 @@
                     if (response.ok) {
                         successBox.textContent = data.message;
                         setTimeout(() => {
-                            window.location.href = "http://127.0.0.1:5000/";
+                            window.location.href = "/login";
                         }, 1000);
                     } else {
                         errorBox.textContent = data.error || "Signup failed.";
