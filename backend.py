@@ -5,6 +5,7 @@ import mysql.connector
 
 app = Flask(__name__)
 bcrypt = Bcrypt(app)
+
 CORS(app)
 
 def get_db_connection():
