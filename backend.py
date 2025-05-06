@@ -32,7 +32,12 @@ def signup():
     try:
         db = get_db_connection()
         cursor = db.cursor(dictionary=True)
-        cursor.execute("INSERT INTO users (username, password_hash, email) VALUES (%s, %s, %s)", (username, hashed_password, email))
+        
+        # Set default cash to 500 and lives to 0 when creating a user
+        cursor.execute(
+            "INSERT INTO users (username, password_hash, email, cash, lives) VALUES (%s, %s, %s, 500, 0)", 
+            (username, hashed_password, email)
+        )
         db.commit()
         return jsonify({"message": "Signup successful"}), 201
     except mysql.connector.IntegrityError:
@@ -103,12 +108,18 @@ def purchase_life():
             db.commit()
             db.close()
 
+            # Record the transaction
+            cursor = db.cursor()
+            cursor.execute("INSERT INTO transactions (user_id, type, amount) VALUES (%s, %s, %s)", 
+                           (user_id, 'life_purchase', 100))
+            db.commit()
+            db.close()
+
             return jsonify({"message": "Life purchased successfully"}), 200
         else:
             return jsonify({"error": "Not enough cash to purchase a life"}), 400
     except mysql.connector.Error as err:
         return jsonify({"error": str(err)}), 500
-
 
 @app.route('/earn_cash', methods=['POST'])
 def earn_cash():
