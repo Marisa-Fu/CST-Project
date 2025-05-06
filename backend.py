@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = os.getenv('your_secret_key', 'default_key')
+app.secret_key = os.getenv('FLASK_SECRET_KEY', 'default_key')
 
 bcrypt = Bcrypt(app)
 CORS(app)
@@ -34,21 +34,23 @@ def get_db_connection():
         cursorclass=pymysql.cursors.DictCursor
     )
 
-# Routes for rendering HTML pages
+# HTML rendering routes
 @app.route('/')
 def home():
     if 'user_id' not in session:
-        return redirect(url_for('login_page'))  # Redirect to login if not logged in
+        return redirect(url_for('login_page'))
     return render_template('main_pg.html')
 
-@app.route('/login', methods=['GET'])
-def login_page():
-        return render_template('login.html')
+# @app.route('/login', methods=['GET'])
+# def login_page():
+#     return render_template('login.html')
+
+# login_page = login_page
 
 @app.route('/signup_page')
 def signup_page():
     if 'user_id' in session:
-        return redirect(url_for('login_page'))  # Already logged in
+        return redirect(url_for('home'))
     return render_template('signup.html')
 
 @app.route('/logout')
@@ -74,7 +76,7 @@ def level3_page():
         return redirect(url_for('login_page'))
     return render_template('LVL-3.html')
 
-# Signup route
+# Signup
 @app.route('/signup', methods=['POST'])
 def signup():
     data = request.json
@@ -87,17 +89,13 @@ def signup():
 
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
 
-    db = None
-    cursor = None
-
     try:
         db = get_db_connection()
-        cursor = db.cursor()
-        cursor.execute("INSERT INTO users (username, password_hash, email, cash, lives) VALUES (%s, %s, %s, 500, 0)",
-                       (username, hashed_password, email))
+        with db.cursor() as cursor:
+            cursor.execute("INSERT INTO users (username, password_hash, email, cash, lives) VALUES (%s, %s, %s, 500, 0)",
+                           (username, hashed_password, email))
         db.commit()
-
-        return jsonify({"message": "Signup successful"}), 201  # Ensure the success message is sent here
+        return jsonify({"message": "Signup successful"}), 201
 
     except pymysql.err.IntegrityError:
         return jsonify({"error": "Username or email already taken"}), 400
@@ -106,47 +104,43 @@ def signup():
         return jsonify({"error": str(e)}), 500
 
     finally:
-        if cursor:
-            cursor.close()
-        if db:
-            db.close()
+        db.close()
 
-@app.route('/login_submit', methods=['POST'])
-def login_submit():
-    data = request.json
-    username = data.get('username')
-    password = data.get('password')
+# Login
+@app.route('/login', methods=['GET', 'POST'])
+def login_page():
+    if request.method == 'POST':
+        data = request.json
+        username = data.get('username')
+        password = data.get('password')
 
-    db = get_db_connection()
-    cursor = db.cursor()
+        db = get_db_connection()
+        with db.cursor() as cursor:
+            cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+            user = cursor.fetchone()
+        db.close()
 
-    cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
-    user = cursor.fetchone()
+        if user and bcrypt.check_password_hash(user['password_hash'], password):
+            session['user_id'] = user['user_id']
+            return jsonify({
+                "message": "Login successful",
+                "user_id": user['user_id'],
+                "cash": user['cash'],
+                "lives": user['lives']
+            }), 200
+        else:
+            return jsonify({"error": "Invalid username or password"}), 401
 
-    cursor.close()
-    db.close()
-
-    if user and bcrypt.check_password_hash(user['password_hash'], password):
-        session['user_id'] = user['user_id']
-        return jsonify({
-            "message": "Login successful",
-            "user_id": user['user_id'],
-            "cash": user['cash'],
-            "lives": user['lives']
-        }), 200
-    else:
-        return jsonify({"error": "Invalid username or password"}), 401
-
+    return render_template('login.html')
 # Get balance
 @app.route('/get_balance', methods=['GET'])
 def get_balance():
     user_id = session.get('user_id')
     if user_id:
         db = get_db_connection()
-        cursor = db.cursor()
-        cursor.execute("SELECT cash, lives FROM users WHERE user_id = %s", (user_id,))
-        balance = cursor.fetchone()
-        cursor.close()
+        with db.cursor() as cursor:
+            cursor.execute("SELECT cash, lives FROM users WHERE user_id = %s", (user_id,))
+            balance = cursor.fetchone()
         db.close()
         return jsonify({'cash': balance['cash'], 'lives': balance['lives']})
     else:
@@ -157,35 +151,34 @@ def get_balance():
 def purchase_life():
     user_id = request.json.get('user_id')
 
+    db = get_db_connection()
     try:
-        db = get_db_connection()
-        cursor = db.cursor()
-        cursor.execute("SELECT cash, lives, email FROM users WHERE user_id = %s", (user_id,))
-        user = cursor.fetchone()
+        with db.cursor() as cursor:
+            cursor.execute("SELECT cash, lives, email FROM users WHERE user_id = %s", (user_id,))
+            user = cursor.fetchone()
 
-        if not user:
-            return jsonify({"error": "User not found"}), 404
+            if not user:
+                return jsonify({"error": "User not found"}), 404
 
-        if user['cash'] >= 100:
-            new_cash = user['cash'] - 100
-            new_lives = user['lives'] + 1
-            cursor.execute("UPDATE users SET cash = %s, lives = %s WHERE user_id = %s", (new_cash, new_lives, user_id))
-            db.commit()
+            if user['cash'] >= 100:
+                new_cash = user['cash'] - 100
+                new_lives = user['lives'] + 1
+                cursor.execute("UPDATE users SET cash = %s, lives = %s WHERE user_id = %s", (new_cash, new_lives, user_id))
+                db.commit()
 
-            msg = Message('Life Purchased', recipients=[user['email']])
-            msg.body = "You successfully purchased a life for $100. Good luck on your next quiz!"
-            mail.send(msg)
+                msg = Message('Life Purchased', recipients=[user['email']])
+                msg.body = "You successfully purchased a life for $100. Good luck on your next quiz!"
+                mail.send(msg)
 
-            return jsonify({"message": "Life purchased successfully"}), 200
-        else:
-            return jsonify({"error": "Not enough cash to purchase a life"}), 400
+                return jsonify({"message": "Life purchased successfully"}), 200
+            else:
+                return jsonify({"error": "Not enough cash to purchase a life"}), 400
     except Exception as err:
         return jsonify({"error": str(err)}), 500
     finally:
-        cursor.close()
         db.close()
 
-# Earn cash from quiz
+# Earn cash
 @app.route('/earn_cash', methods=['POST'])
 def earn_cash():
     user_id = session.get('user_id')
@@ -202,38 +195,34 @@ def earn_cash():
             reward = 150 if score == 10 else 75 if score >= 6 else 0
 
         db = get_db_connection()
-        cursor = db.cursor()
-        cursor.execute("UPDATE users SET cash = cash + %s WHERE user_id = %s", (reward, user_id))
+        with db.cursor() as cursor:
+            cursor.execute("UPDATE users SET cash = cash + %s WHERE user_id = %s", (reward, user_id))
+            cursor.execute("INSERT INTO transactions (user_id, type, amount) VALUES (%s, %s, %s)", (user_id, 'quiz_reward', reward))
         db.commit()
-        cursor.execute("INSERT INTO transactions (user_id, type, amount) VALUES (%s, %s, %s)", (user_id, 'quiz_reward', reward))
-        db.commit()
-        cursor.close()
         db.close()
 
         return jsonify({'message': f'You earned {reward} cash!'})
 
     return jsonify({'error': 'User not logged in'}), 400
 
-# Take a quiz
+# Take quiz
 @app.route('/take_quiz', methods=['POST'])
 def take_quiz():
     user_id = session.get('user_id')
     if user_id:
         db = get_db_connection()
-        cursor = db.cursor()
-        cursor.execute("SELECT lives FROM users WHERE user_id = %s", (user_id,))
-        lives = cursor.fetchone()['lives']
+        with db.cursor() as cursor:
+            cursor.execute("SELECT lives FROM users WHERE user_id = %s", (user_id,))
+            lives = cursor.fetchone()['lives']
 
-        if lives > 0:
-            cursor.execute("UPDATE users SET lives = lives - 1 WHERE user_id = %s", (user_id,))
-            db.commit()
-            cursor.close()
-            db.close()
-            return jsonify({'message': 'Quiz started!'})
-        else:
-            cursor.close()
-            db.close()
-            return jsonify({'error': 'Not enough lives'}), 400
+            if lives > 0:
+                cursor.execute("UPDATE users SET lives = lives - 1 WHERE user_id = %s", (user_id,))
+                db.commit()
+                db.close()
+                return jsonify({'message': 'Quiz started!'})
+            else:
+                db.close()
+                return jsonify({'error': 'Not enough lives'}), 400
     else:
         return jsonify({'error': 'User not logged in'}), 400
 
@@ -244,9 +233,10 @@ def forgot_password():
     email = data.get('email')
 
     db = get_db_connection()
-    cursor = db.cursor()
-    cursor.execute("SELECT username FROM users WHERE email = %s", (email,))
-    user = cursor.fetchone()
+    with db.cursor() as cursor:
+        cursor.execute("SELECT username FROM users WHERE email = %s", (email,))
+        user = cursor.fetchone()
+    db.close()
 
     if user:
         msg = Message('Password Reset Request', recipients=[email])
@@ -258,24 +248,19 @@ def forgot_password():
     else:
         return jsonify({'error': 'Email not found'}), 404
 
-# Username availability check
+# Username check
 @app.route('/check_username', methods=['POST'])
 def check_username():
     data = request.json
     username = data.get('username')
 
     db = get_db_connection()
-    cursor = db.cursor()
-    cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
-    user = cursor.fetchone()
-
-    cursor.close()
+    with db.cursor() as cursor:
+        cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+        user = cursor.fetchone()
     db.close()
 
-    if user:
-        return jsonify({"available": False})
-    else:
-        return jsonify({"available": True})
+    return jsonify({"available": not bool(user)})
 
 if __name__ == '__main__':
     app.run(debug=True)

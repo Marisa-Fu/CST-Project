@@ -46,7 +46,7 @@
   
       if (confirm) {
           // You can redirect or perform logout action here
-          window.location.href = "/login";
+          window.location.href = "/logout";
           // window.location.href = "/login"; // Optional redirect
       }
   }
