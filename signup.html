@@ -27,7 +27,7 @@
                 <input type="password" id="password" required>
                 <label>Password</label>
             </div>
-            <small class ="password requirments">
+            <small id="password-help" class="password-requirements" style="display: none;">
                 Password must be at least 8 characters long, include 1 uppercase letter, 1 lowercase letter, and 1 special character.
             </small>
             
@@ -67,7 +67,7 @@
                 return;
             }
             
-            fetch("http://127.0.0.1:5000/user/signup", {
+            fetch("http://127.0.0.1:5000/signup", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
