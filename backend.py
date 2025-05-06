@@ -10,7 +10,7 @@ app.secret_key = 'your_secret_key_here'
 bcrypt = Bcrypt(app)
 CORS(app)
 
-# Email configuration
+## making an email
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
@@ -210,7 +210,7 @@ def check_username():
     data = request.json
     username = data.get('username')
 
-    # Check if username already exists in the database
+    # ts checks if username already exists in the database
     db = get_db_connection()
     cursor = db.cursor(dictionary=True)
     cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
