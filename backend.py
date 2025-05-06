@@ -5,11 +5,15 @@ from flask_mail import Mail, Message
 import pymysql
 import os
 from dotenv import load_dotenv
+from datetime import timedelta
+
+app.permanent_session_lifetime = timedelta(days=7)
 
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('your_secret_key', 'default_key')
+app.config['SESSION_COOKIE_NAME'] = 'your_session_cookie'
 
 bcrypt = Bcrypt(app)
 CORS(app)
@@ -33,6 +37,9 @@ def get_db_connection():
         database=os.getenv('DB_NAME'),
         cursorclass=pymysql.cursors.DictCursor
     )
+@app.before_request
+def check_session():
+    print(session)
 
 # Routes for rendering HTML pages
 @app.route('/')
