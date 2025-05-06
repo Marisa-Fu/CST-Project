@@ -16,7 +16,12 @@
       <img src="{{ url_for('static', filename='images/RkiMyoycj.png') }}" alt="Custom Button" />
     </button>
     
-    <button class="logout-btn" onclick="showLogoutPopup()">Logout</button>
+    {% if session.get('user_id') %}
+        <button class="logout-btn" onclick="showLogoutPopup()">Logout</button>
+    {% else %}
+        <a href="{{ url_for('login_page') }}" class="logout-btn">Login</a>
+        <a href="{{ url_for('signup_page') }}" class="logout-btn">Sign Up</a>
+    {% endif %}
   </header>
 
   <main>
