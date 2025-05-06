@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, session, render_template
+from flask import Flask, request, jsonify, session, render_template, redirect, url_for
 from flask_bcrypt import Bcrypt
 from flask_cors import CORS
 from flask_mail import Mail, Message
@@ -37,26 +37,43 @@ def get_db_connection():
 # Routes for rendering HTML pages
 @app.route('/')
 def home():
+    if 'user_id' not in session:
+        return redirect(url_for('login_page'))  # Redirect to login if not logged in
     return render_template('main_pg.html')
 
 @app.route('/login')
 def login_page():
+    if 'user_id' in session:
+        return redirect(url_for('home'))  # Already logged in
     return render_template('login.html')
 
 @app.route('/signup_page')
 def signup_page():
+    if 'user_id' in session:
+        return redirect(url_for('home'))  # Already logged in
     return render_template('signup.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login_page'))
 
 @app.route('/level1')
 def level1_page():
+    if 'user_id' not in session:
+        return redirect(url_for('login_page'))
     return render_template('LVL-1.html')
 
 @app.route('/level2')
 def level2_page():
+    if 'user_id' not in session:
+        return redirect(url_for('login_page'))
     return render_template('LVL-2.html')
 
 @app.route('/level3')
 def level3_page():
+    if 'user_id' not in session:
+        return redirect(url_for('login_page'))
     return render_template('LVL-3.html')
 
 # Signup route
