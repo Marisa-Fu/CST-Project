@@ -180,11 +180,11 @@ def signup():
         try:
             credentials = pickle.loads(session.get('credentials'))
             if not credentials:
-                print("Gmail not authenticated")
                 return jsonify({"error": "Not authenticated with Gmail API"}), 403
 
             service = build('gmail', 'v1', credentials=credentials)
 
+            # Prepare the email
             message = MIMEMultipart()
             message['to'] = email
             message['subject'] = 'Welcome to Pycode!'
@@ -265,6 +265,7 @@ def purchase_life():
                 cursor.execute("UPDATE users SET cash = %s, lives = %s WHERE user_id = %s", (new_cash, new_lives, user_id))
                 db.commit()
 
+                # Send email notification for life purchase
                 msg = Message('Life Purchased', recipients=[user['email']])
                 msg.body = "You successfully purchased a life for $100. Good luck on your next quiz!"
                 mail.send(msg)
@@ -298,6 +299,13 @@ def earn_cash():
             cursor.execute("INSERT INTO transactions (user_id, type, amount) VALUES (%s, %s, %s)", (user_id, 'quiz_reward', reward))
         db.commit()
         db.close()
+
+        # Send email notification for earning cash
+        if reward > 0:
+            user_email = "user_email@example.com"  # Get this from the database
+            msg = Message('Cash Earned!', recipients=[user_email])
+            msg.body = f"Congratulations! You earned {reward} cash for completing the quiz."
+            mail.send(msg)
 
         return jsonify({'message': f'You earned {reward} cash!'})
 
