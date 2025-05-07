@@ -21,7 +21,9 @@ app.secret_key = os.getenv('FLASK_SECRET_KEY', 'default_key')
 bcrypt = Bcrypt(app)
 CORS(app)
 
-CLIENTS_SECRETS_FILE = "client_secret.json"
+CLIENTS_SECRETS_FILE = "client_secret.json" ## json file with client id
+## CLIENT ID (IMPORTANT) : 850004533604-4h900abuh378lgpeee7q1s17odhh2fhh.apps.googleusercontent.com
+## CLIENT SECRET : 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  
 SCOPES = ['https://www.googleapis.com/auth/gmail.send']
 REDIRECT_URI = "http://localhost:5000/callback"
 
