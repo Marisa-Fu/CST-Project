@@ -13,7 +13,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import base64
 ## email terminak - set OAUTHLIB_INSECURE_TRANSPORT=1
-
+## http://localhost:5000/authorize 
 load_dotenv()
 
 app = Flask(__name__)
@@ -23,8 +23,6 @@ bcrypt = Bcrypt(app)
 CORS(app)
 
 CLIENTS_SECRETS_FILE = "client_secret.json" ## json file with client id
-## CLIENT ID (IMPORTANT) : 850004533604-4h900abuh378lgpeee7q1s17odhh2fhh.apps.googleusercontent.com
-## CLIENT SECRET : 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  
 SCOPES = ['https://www.googleapis.com/auth/gmail.send']
 REDIRECT_URI = "http://localhost:5000/callback"
 
@@ -67,15 +65,19 @@ def callback():
     flow.fetch_token(authorization_response=request.url)
     credentials = flow.credentials
 
-    # Save to session (still optional)
+    # Save to session
     session['credentials'] = pickle.dumps(credentials)
 
-    # ✅ Also save to file for persistent reuse
+    # Save to file for persistent reuse
     with open('gmail_token.pkl', 'wb') as token:
         pickle.dump(credentials, token)
 
     print("OAuth2 Authentication successful and credentials saved to file.")
-    return 'Authentication successful! You can now send emails.'
+
+    # After successful authentication, send welcome email
+    send_welcome_email(session['user_email'])
+
+    return redirect(url_for('home'))  # Redirect to the main page after auth
 
 def load_gmail_credentials():
     try:
@@ -90,49 +92,86 @@ def load_gmail_credentials():
         print("Failed to load Gmail credentials:", e)
         return None
 
-@app.route('/send_email', methods=['POST'])
-def send_email():
+def send_welcome_email(email):
     credentials = load_gmail_credentials()
     if not credentials:
-        return jsonify({"error": "You are not authenticated!"}), 400
+        print("Credentials not available.")
+        return
 
-    if credentials.expired and credentials.refresh_token:
-        credentials.refresh(Request())
-        with open('gmail_token.pkl', 'wb') as token:
-            pickle.dump(credentials, token)
+    service = build('gmail', 'v1', credentials=credentials)
+    message = MIMEMultipart()
+    message['to'] = email
+    message['subject'] = 'Welcome to Pycode!'
+    body = 'Hello, \n\nThank you for signing up to Pycode. Have fun and good luck!'
+    message.attach(MIMEText(body, 'plain'))
+
+    raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
+    try:
+        service.users().messages().send(userId='me', body={'raw': raw_message}).execute()
+        print("Welcome email sent!")
+    except Exception as error:
+        print(f"Error sending email: {error}")
+
+@app.route('/signup', methods=['POST'])
+def signup():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+    email = data.get('email')
+
+    if not username or not password or not email:
+        return jsonify({"error": "Username, password, and email are required"}), 400
+
+    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
 
     try:
-        # Initialize Gmail API with valid credentials
-        service = build('gmail', 'v1', credentials=credentials)
-        
-        # Get email data from the request
-        data = request.json
-        recipient = data.get('recipient')
-        username = data.get('username')
+        db = get_db_connection()
+        with db.cursor() as cursor:
+            cursor.execute("INSERT INTO users (username, password_hash, email, cash, lives) VALUES (%s, %s, %s, 500, 0)",
+                           (username, hashed_password, email))
+        db.commit()
 
-        # Create the email message
-        message = MIMEMultipart()
-        message['to'] = recipient
-        message['subject'] = 'Welcome to Pycode!'
-        body = f'Hello {username},\n\nThank you for signing up to Pycode. Have fun and good luck! 🧠'
-        message.attach(MIMEText(body, 'plain'))
+        # After successful signup, set the user email in session and redirect to Google OAuth
+        session['user_email'] = email
 
-        # Encode message in base64
-        raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
+        return jsonify({"message": "Signup successful! Please authenticate with Google."}), 200
 
-        # Send email using Gmail API
-        send_message = service.users().messages().send(userId='me', body={'raw': raw_message}).execute()
+    except pymysql.err.IntegrityError:
+        return jsonify({"error": "Username or email already taken"}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        db.close()
 
-        return jsonify({"message": f"Email sent to {recipient}! Message ID: {send_message['id']}"}), 200
-    except Exception as error:
-        return jsonify({"error": f"An error occurred: {str(error)}"}), 500
+@app.route('/login', methods=['POST'])
+def login_page():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
 
+    db = get_db_connection()
+    with db.cursor() as cursor:
+        cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+        user = cursor.fetchone()
+    db.close()
+
+    if user and bcrypt.check_password_hash(user['password_hash'], password):
+        session['user_id'] = user['user_id']
+        return redirect(url_for('authorize'))  # Redirect to Google OAuth after login
+    else:
+        return jsonify({"error": "Invalid username or password"}), 401
 
 @app.route('/')
 def home():
     if 'user_id' not in session:
         return redirect(url_for('login_page'))
     return render_template('main_pg.html')
+
+# Other routes remain the same...
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
 
 @app.route('/signup_page')
 def signup_page():
