@@ -12,6 +12,7 @@ import pickle
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import base64
+## email terminak - set OAUTHLIB_INSECURE_TRANSPORT=1
 
 load_dotenv()
 
@@ -65,10 +66,15 @@ def callback():
     )
     flow.fetch_token(authorization_response=request.url)
     credentials = flow.credentials
+
+    # Save to session (still optional)
     session['credentials'] = pickle.dumps(credentials)
 
-    # Debugging log to ensure credentials are saved correctly
-    print("OAuth2 Authentication successful!")
+    # ✅ Also save to file for persistent reuse
+    with open('gmail_token.pkl', 'wb') as token:
+        pickle.dump(credentials, token)
+
+    print("OAuth2 Authentication successful and credentials saved to file.")
     return 'Authentication successful! You can now send emails.'
 
 def load_gmail_credentials():
@@ -86,7 +92,7 @@ def load_gmail_credentials():
 
 @app.route('/send_email', methods=['POST'])
 def send_email():
-    credentials = pickle.loads(session.get('credentials'))
+    credentials = load_gmail_credentials()
     if not credentials:
         return jsonify({"error": "You are not authenticated!"}), 400
 
@@ -178,7 +184,7 @@ def signup():
 
         # Send welcome email via Gmail API
         try:
-            credentials = pickle.loads(session.get('credentials'))
+            credentials = load_gmail_credentials()
             if not credentials:
                 return jsonify({"error": "Not authenticated with Gmail API"}), 403
 
@@ -302,7 +308,8 @@ def earn_cash():
 
         # Send email notification for earning cash
         if reward > 0:
-            user_email = "user_email@example.com"  # Get this from the database
+            cursor.execute("SELECT email FROM users WHERE user_id = %s", (user_id,))
+            user_email = cursor.fetchone()['email']
             msg = Message('Cash Earned!', recipients=[user_email])
             msg.body = f"Congratulations! You earned {reward} cash for completing the quiz."
             mail.send(msg)
