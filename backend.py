@@ -132,7 +132,7 @@ def signup():
         db.commit()
 
         # After successful signup, set the user email in session and redirect to Google OAuth
-        session['user_email'] = email
+        session['user_email'] = user['email']
 
         return jsonify({"message": "Signup successful! Please authenticate with Google."}), 200
 
@@ -143,35 +143,16 @@ def signup():
     finally:
         db.close()
 
-@app.route('/login', methods=['POST'])
-def login_page():
-    data = request.json
-    username = data.get('username')
-    password = data.get('password')
-
-    db = get_db_connection()
-    with db.cursor() as cursor:
-        cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
-        user = cursor.fetchone()
-    db.close()
-
-    if user and bcrypt.check_password_hash(user['password_hash'], password):
-        session['user_id'] = user['user_id']
-        return redirect(url_for('authorize'))  # Redirect to Google OAuth after login
-    else:
-        return jsonify({"error": "Invalid username or password"}), 401
-
 @app.route('/')
 def home():
     if 'user_id' not in session:
-        return redirect(url_for('login_page'))
+        return redirect(url_for('login_page'))  # Redirect to login if not logged in
     return render_template('main_pg.html')
 
 # Other routes remain the same...
 
 if __name__ == '__main__':
     app.run(debug=True)
-
 
 @app.route('/signup_page')
 def signup_page():
@@ -202,77 +183,23 @@ def level3_page():
         return redirect(url_for('login_page'))
     return render_template('LVL-3.html')
 
-@app.route('/signup', methods=['POST'])
-def signup():
+@app.route('/login', methods=['POST'])
+def login_page():
     data = request.json
     username = data.get('username')
     password = data.get('password')
-    email = data.get('email')
 
-    if not username or not password or not email:
-        return jsonify({"error": "Username, password, and email are required"}), 400
+    db = get_db_connection()
+    with db.cursor() as cursor:
+        cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+        user = cursor.fetchone()
+    db.close()
 
-    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-
-    try:
-        db = get_db_connection()
-        with db.cursor() as cursor:
-            cursor.execute("INSERT INTO users (username, password_hash, email, cash, lives) VALUES (%s, %s, %s, 500, 0)",
-                           (username, hashed_password, email))
-        db.commit()
-
-        # Send welcome email via Gmail API
-        try:
-            credentials = load_gmail_credentials()
-            if not credentials:
-                return jsonify({"error": "Not authenticated with Gmail API"}), 403
-
-            service = build('gmail', 'v1', credentials=credentials)
-
-            # Prepare the email
-            message = MIMEMultipart()
-            message['to'] = email
-            message['subject'] = 'Welcome to Pycode!'
-            body = f'Hello {username},\n\nThank you for signing up to Pycode. Have fun and good luck! 🧠'
-            message.attach(MIMEText(body, 'plain'))
-
-            raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
-            service.users().messages().send(userId='me', body={'raw': raw_message}).execute()
-        except Exception as e:
-            print("Email send failed:", e)
-
-        return jsonify({"message": "Signup successful!"}), 200
-
-    except pymysql.err.IntegrityError:
-        return jsonify({"error": "Username or email already taken"}), 400
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    finally:
-        db.close()
-
-@app.route('/login', methods=['GET', 'POST'])
-def login_page():
-    if request.method == 'POST':
-        data = request.json
-        username = data.get('username')
-        password = data.get('password')
-
-        db = get_db_connection()
-        with db.cursor() as cursor:
-            cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
-            user = cursor.fetchone()
-        db.close()
-
-        if user and bcrypt.check_password_hash(user['password_hash'], password):
-            session['user_id'] = user['user_id']
-            return jsonify({
-                "message": "Login successful",
-                "user_id": user['user_id'],
-                "cash": user['cash'],
-                "lives": user['lives']
-            }), 200
-        else:
-            return jsonify({"error": "Invalid username or password"}), 401
+    if user and bcrypt.check_password_hash(user['password_hash'], password):
+        session['user_id'] = user['user_id']  # Ensure session user_id is set
+        return redirect(url_for('authorize'))  # Redirect to Google OAuth after login
+    else:
+        return jsonify({"error": "Invalid username or password"}), 401
 
     return render_template('login.html')
 
