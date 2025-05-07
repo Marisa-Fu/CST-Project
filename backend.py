@@ -5,6 +5,13 @@ from flask_mail import Mail, Message
 import pymysql
 import os
 from dotenv import load_dotenv
+from google_auth_oauthlib.flow import Flow
+from googleapiclient.discovery import build
+from google.auth.transport.requests import Request
+import pickle
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+import base64
 
 load_dotenv()
 
@@ -14,17 +21,19 @@ app.secret_key = os.getenv('FLASK_SECRET_KEY', 'default_key')
 bcrypt = Bcrypt(app)
 CORS(app)
 
-# Email configuration
+CLIENTS_SECRETS_FILE = "client_secret.json"
+SCOPES = ['https://www.googleapis.com/auth/gmail.send']
+REDIRECT_URI = "http://localhost:5000/callback"
+
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = os.getenv('pycodequiz@gmail.com')
-app.config['MAIL_PASSWORD'] = os.getenv('kdolnxgfzrutiomo')
+app.config['MAIL_PASSWORD'] = os.getenv('dhydjvenutwwacwn')
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv('pycodequiz@gmail.com')
 
 mail = Mail(app)
 
-# Database connection
 def get_db_connection():
     return pymysql.connect(
         host=os.getenv('DB_HOST'),
@@ -34,7 +43,58 @@ def get_db_connection():
         cursorclass=pymysql.cursors.DictCursor
     )
 
-# HTML rendering routes
+@app.route('/authorize')
+def authorize():
+    flow = Flow.from_client_secrets_file(
+        CLIENTS_SECRETS_FILE,
+        scopes=SCOPES,
+        redirect_uri=REDIRECT_URI
+    )
+    authorization_url, state = flow.authorization_url(prompt='consent')
+    session['state'] = state
+    return redirect(authorization_url)
+
+@app.route('/callback')
+def callback():
+    flow = Flow.from_client_secrets_file(
+        CLIENTS_SECRETS_FILE,
+        scopes=SCOPES,
+        redirect_uri=REDIRECT_URI
+    )
+    flow.fetch_token(authorization_response=request.url)
+    credentials = flow.credentials
+    session['credentials'] = pickle.dumps(credentials)
+    return 'Authentication successful! You can now send emails.'
+
+@app.route('/send_email', methods=['POST'])
+def send_email():
+    credentials = pickle.loads(session.get('credentials'))
+    if not credentials:
+        return 'You are not authenticated!', 400
+
+    if credentials.expired and credentials.refresh_token:
+        credentials.refresh(Request())
+        session['credentials'] = pickle.dumps(credentials)
+
+    try:
+        service = build('gmail', 'v1', credentials=credentials)
+        data = request.json
+        recipient = data.get('recipient')
+        username = data.get('username')
+
+        message = MIMEMultipart()
+        message['to'] = recipient
+        message['subject'] = 'Welcome to Pycode!'
+        body = f'Hello {username},\n\nThank you for signing up to Pycode. Have fun and good luck! 🧠'
+        message.attach(MIMEText(body, 'plain'))
+
+        raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
+        send_message = service.users().messages().send(userId='me', body={'raw': raw_message}).execute()
+
+        return f'Email sent to {recipient}! Message ID: {send_message["id"]}'
+    except Exception as error:
+        return f'An error occurred: {error}', 500
+
 @app.route('/')
 def home():
     if 'user_id' not in session:
@@ -70,7 +130,6 @@ def level3_page():
         return redirect(url_for('login_page'))
     return render_template('LVL-3.html')
 
-# Signup
 @app.route('/signup', methods=['POST'])
 def signup():
     data = request.json
@@ -89,18 +148,16 @@ def signup():
             cursor.execute("INSERT INTO users (username, password_hash, email, cash, lives) VALUES (%s, %s, %s, 500, 0)",
                            (username, hashed_password, email))
         db.commit()
-        return jsonify({"message": "Signup successful"}), 201
 
+        # Send welcome email via Gmail API
+        return redirect(url_for('send_email') + f'?recipient={email}&username={username}')
     except pymysql.err.IntegrityError:
         return jsonify({"error": "Username or email already taken"}), 400
-
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
     finally:
         db.close()
 
-# Login
 @app.route('/login', methods=['GET', 'POST'])
 def login_page():
     if request.method == 'POST':
@@ -127,7 +184,6 @@ def login_page():
 
     return render_template('login.html')
 
-# Get balance
 @app.route('/get_balance', methods=['GET'])
 def get_balance():
     user_id = session.get('user_id')
@@ -141,7 +197,6 @@ def get_balance():
     else:
         return jsonify({'error': 'User not logged in'}), 400
 
-# Purchase life
 @app.route('/purchase_life', methods=['POST'])
 def purchase_life():
     user_id = session.get('user_id')
@@ -175,7 +230,6 @@ def purchase_life():
     finally:
         db.close()
 
-# Earn cash
 @app.route('/earn_cash', methods=['POST'])
 def earn_cash():
     user_id = session.get('user_id')
@@ -202,7 +256,6 @@ def earn_cash():
 
     return jsonify({'error': 'User not logged in'}), 400
 
-# Take quiz
 @app.route('/take_quiz', methods=['POST'])
 def take_quiz():
     user_id = session.get('user_id')
@@ -223,7 +276,6 @@ def take_quiz():
     else:
         return jsonify({'error': 'User not logged in'}), 400
 
-# Forgot password
 @app.route('/forgot_password', methods=['POST'])
 def forgot_password():
     data = request.json
@@ -245,7 +297,6 @@ def forgot_password():
     else:
         return jsonify({'error': 'Email not found'}), 404
 
-# Username check
 @app.route('/check_username', methods=['POST'])
 def check_username():
     data = request.json
@@ -258,6 +309,16 @@ def check_username():
     db.close()
 
     return jsonify({"available": not bool(user)})
+
+@app.route('/routes')
+def list_routes():
+    import urllib
+    output = []
+    for rule in app.url_map.iter_rules():
+        methods = ','.join(rule.methods)
+        line = urllib.parse.unquote(f"{rule.endpoint:30s} {methods:20s} {rule}")
+        output.append(line)
+    return '<pre>' + '\n'.join(sorted(output)) + '</pre>'
 
 if __name__ == '__main__':
     app.run(debug=True)
