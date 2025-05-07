@@ -65,6 +65,7 @@
         console.log("Purchase response:", data);
           if (data.message) {
               // Update the display after a successful purchase
+              alert(data.message) {}
               openPopup(); // Re-fetch the balance to update the UI
           } else {
               alert(data.error || "Error purchasing life");
@@ -73,5 +74,4 @@
       .catch(error => {
           console.error("Error purchasing life:", error);
       });
-  }
-  
+  } 
