@@ -66,36 +66,61 @@ def callback():
     flow.fetch_token(authorization_response=request.url)
     credentials = flow.credentials
     session['credentials'] = pickle.dumps(credentials)
+
+    # Debugging log to ensure credentials are saved correctly
+    print("OAuth2 Authentication successful!")
     return 'Authentication successful! You can now send emails.'
+
+def load_gmail_credentials():
+    try:
+        with open('gmail_token.pkl', 'rb') as token:
+            credentials = pickle.load(token)
+        if credentials.expired and credentials.refresh_token:
+            credentials.refresh(Request())
+            with open('gmail_token.pkl', 'wb') as token:
+                pickle.dump(credentials, token)
+        return credentials
+    except Exception as e:
+        print("Failed to load Gmail credentials:", e)
+        return None
 
 @app.route('/send_email', methods=['POST'])
 def send_email():
     credentials = pickle.loads(session.get('credentials'))
     if not credentials:
-        return 'You are not authenticated!', 400
+        return jsonify({"error": "You are not authenticated!"}), 400
 
     if credentials.expired and credentials.refresh_token:
         credentials.refresh(Request())
-        session['credentials'] = pickle.dumps(credentials)
+        with open('gmail_token.pkl', 'wb') as token:
+            pickle.dump(credentials, token)
 
     try:
+        # Initialize Gmail API with valid credentials
         service = build('gmail', 'v1', credentials=credentials)
+        
+        # Get email data from the request
         data = request.json
         recipient = data.get('recipient')
         username = data.get('username')
 
+        # Create the email message
         message = MIMEMultipart()
         message['to'] = recipient
         message['subject'] = 'Welcome to Pycode!'
         body = f'Hello {username},\n\nThank you for signing up to Pycode. Have fun and good luck! 🧠'
         message.attach(MIMEText(body, 'plain'))
 
+        # Encode message in base64
         raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
+
+        # Send email using Gmail API
         send_message = service.users().messages().send(userId='me', body={'raw': raw_message}).execute()
 
-        return f'Email sent to {recipient}! Message ID: {send_message["id"]}'
+        return jsonify({"message": f"Email sent to {recipient}! Message ID: {send_message['id']}"}), 200
     except Exception as error:
-        return f'An error occurred: {error}', 500
+        return jsonify({"error": f"An error occurred: {str(error)}"}), 500
+
 
 @app.route('/')
 def home():
@@ -152,7 +177,27 @@ def signup():
         db.commit()
 
         # Send welcome email via Gmail API
-        return redirect(url_for('send_email') + f'?recipient={email}&username={username}')
+        try:
+            credentials = pickle.loads(session.get('credentials'))
+            if not credentials:
+                print("Gmail not authenticated")
+                return jsonify({"error": "Not authenticated with Gmail API"}), 403
+
+            service = build('gmail', 'v1', credentials=credentials)
+
+            message = MIMEMultipart()
+            message['to'] = email
+            message['subject'] = 'Welcome to Pycode!'
+            body = f'Hello {username},\n\nThank you for signing up to Pycode. Have fun and good luck! 🧠'
+            message.attach(MIMEText(body, 'plain'))
+
+            raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
+            service.users().messages().send(userId='me', body={'raw': raw_message}).execute()
+        except Exception as e:
+            print("Email send failed:", e)
+
+        return jsonify({"message": "Signup successful!"}), 200
+
     except pymysql.err.IntegrityError:
         return jsonify({"error": "Username or email already taken"}), 400
     except Exception as e:
