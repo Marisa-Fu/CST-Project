@@ -41,12 +41,6 @@ def home():
         return redirect(url_for('login_page'))
     return render_template('main_pg.html')
 
-# @app.route('/login', methods=['GET'])
-# def login_page():
-#     return render_template('login.html')
-
-# login_page = login_page
-
 @app.route('/signup_page')
 def signup_page():
     if 'user_id' in session:
@@ -132,6 +126,7 @@ def login_page():
             return jsonify({"error": "Invalid username or password"}), 401
 
     return render_template('login.html')
+
 # Get balance
 @app.route('/get_balance', methods=['GET'])
 def get_balance():
@@ -149,7 +144,9 @@ def get_balance():
 # Purchase life
 @app.route('/purchase_life', methods=['POST'])
 def purchase_life():
-    user_id = request.json.get('user_id')
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({"error": "User not logged in"}), 400
 
     db = get_db_connection()
     try:
@@ -170,7 +167,7 @@ def purchase_life():
                 msg.body = "You successfully purchased a life for $100. Good luck on your next quiz!"
                 mail.send(msg)
 
-                return jsonify({"message": "Life purchased successfully"}), 200
+                return jsonify({"message": "Life purchased successfully", "cash": new_cash, "lives": new_lives}), 200
             else:
                 return jsonify({"error": "Not enough cash to purchase a life"}), 400
     except Exception as err:
