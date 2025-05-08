@@ -151,7 +151,7 @@ def signup():
     try:
         db = get_db_connection()
         with db.cursor() as cursor:
-            cursor.execute("""
+            cursor.execute(""" 
                 INSERT INTO users 
                 (username, password_hash, email, cash, lives, gmail_authenticated) 
                 VALUES (%s, %s, %s, 500, 0, 0)""",
