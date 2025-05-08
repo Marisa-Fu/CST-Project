@@ -48,55 +48,47 @@
         document.getElementById("signup-form").addEventListener("submit", function (e) {
             e.preventDefault();
     
-            const email = document.getElementById("email").value;
             const username = document.getElementById("username").value;
+            const email = document.getElementById("email").value;
             const password = document.getElementById("password").value;
+            const confirmPassword = document.getElementById("confirm-password").value;
             const errorBox = document.getElementById("error-message");
-            const successBox = document.getElementById("success-message");
     
             errorBox.textContent = "";
-            successBox.textContent = "";
     
-            if (username.length < 5) {
-                errorBox.textContent = "Username must be at least 5 characters.";
-                return;
-            }
-    
-            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-            if (!passwordRegex.test(password)) {
-                errorBox.textContent = "Password must include at least 8 characters, 1 uppercase, 1 lowercase, and 1 special character.";
+            // Basic validation
+            if (password !== confirmPassword) {
+                errorBox.textContent = "Passwords do not match.";
                 return;
             }
     
             fetch("/signup", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username, password, email })
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ username, email, password })
             })
-            .then(async (response) => {
-                const contentType = response.headers.get("content-type");
-    
-                if (contentType && contentType.includes("application/json")) {
-                    const data = await response.json();
-    
-                    if (response.ok) {
-                        successBox.textContent = data.message;
-                        // Changed this part to handle Gmail auth redirect
-                        if (data.redirect) {
-                            window.location.href = data.redirect;
-                        } else {
-                            window.location.href = "/login";
-                        }
+            .then(response => response.json())
+            .then(data => {
+                console.log("Signup response:", data);
+                if (data.message === "Signup successful!") {
+                    // If redirect URL is provided, go directly to Gmail auth
+                    if (data.redirect) {
+                        console.log("Signup successful, redirecting to Gmail authentication...");
+                        window.location.href = data.redirect;
                     } else {
-                        errorBox.textContent = data.error || "Signup failed.";
+                        // Fallback to home page
+                        console.log("Signup successful, redirecting to home page");
+                        window.location.href = "/";
                     }
                 } else {
-                    throw new Error("Unexpected response format (not JSON).");
+                    errorBox.textContent = data.error || "Something went wrong.";
                 }
             })
-            .catch((error) => {
+            .catch(error => {
                 console.error("Error:", error);
-                errorBox.textContent = "Something went wrong. Please try again.";
+                errorBox.textContent = "Could not connect to server.";
             });
         });
     </script>

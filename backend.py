@@ -81,15 +81,23 @@ def callback():
                 WHERE user_id = %s""", 
                 (session['user_id'],))
             db.commit()
+            
+            # Get updated user data
+            cursor.execute("SELECT * FROM users WHERE user_id = %s", (session['user_id'],))
+            user = cursor.fetchone()
         db.close()
 
-    # Send welcome email
-    if 'user_email' in session:
-        send_welcome_email(session['user_email'])
-    
-    # Clear the session and redirect to login
-    session.clear()
-    return redirect(url_for('login_page'))
+        # Send welcome email if needed
+        if 'user_email' in session:
+            send_welcome_email(session['user_email'])
+        
+        print(f"Gmail authentication completed for user {session['user_id']}")
+        # Redirect to home page instead of login page
+        return redirect(url_for('home'))
+    else:
+        print("No user_id in session during callback")
+        # If somehow there's no session, redirect to login
+        return redirect(url_for('login_page'))
 
 
 def load_gmail_credentials():
@@ -151,12 +159,15 @@ def signup():
             cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
             user = cursor.fetchone()
             
+            # Set session variables to maintain login state
             session['user_email'] = email
             session['user_id'] = user['user_id']
-            session['needs_gmail_auth'] = True  # Add this flag
+            print(f"User signup successful, user_id {user['user_id']} added to session")
 
+        # Return URL for Gmail authorization
         return jsonify({
             "message": "Signup successful!", 
+            "user_id": user['user_id'],
             "redirect": url_for('authorize')
         }), 200
 
@@ -213,7 +224,7 @@ def login_page():
     # If user is already logged in, redirect to home
     if 'user_id' in session:
         print(f"User already logged in with ID: {session['user_id']}, redirecting to home")
-        return redirect(url_for('home'))
+        return redirect(url_for('home')) if request.method == 'GET' else jsonify({"redirect": url_for('home')}), 200
         
     if request.method == 'POST':
         data = request.json
@@ -234,17 +245,21 @@ def login_page():
             
             # Check if user needs Gmail authentication
             if not user.get('gmail_authenticated'):
+                print(f"User {user['user_id']} needs Gmail authentication, redirecting")
                 return jsonify({
                     "message": "Login successful",
                     "needs_gmail_auth": True,
                     "redirect": url_for('authorize')
                 }), 200
             
+            # User is fully authenticated
+            print(f"User {user['user_id']} is fully authenticated")
             return jsonify({
                 "message": "Login successful",
                 "user_id": user['user_id'],
                 "cash": user['cash'],
-                "lives": user['lives']
+                "lives": user['lives'],
+                "redirect": url_for('home')
             }), 200
         else:
             return jsonify({"error": "Invalid username or password"}), 401
