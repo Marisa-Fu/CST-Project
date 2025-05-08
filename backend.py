@@ -3,7 +3,6 @@ from flask_bcrypt import Bcrypt
 from flask_cors import CORS
 from flask_mail import Mail, Message
 import pymysql
-import os
 from dotenv import load_dotenv
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
@@ -12,8 +11,10 @@ import pickle
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import base64
-## email terminak - set OAUTHLIB_INSECURE_TRANSPORT=1
-## http://localhost:5000/authorize 
+import os
+
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'  ## this lets the OAuth (which requires https or security) use our http
+
 load_dotenv()
 
 app = Flask(__name__)
@@ -29,9 +30,9 @@ REDIRECT_URI = "http://localhost:5000/callback"
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = os.getenv('pycodequiz@gmail.com')
-app.config['MAIL_PASSWORD'] = os.getenv('dhydjvenutwwacwn')
-app.config['MAIL_DEFAULT_SENDER'] = os.getenv('pycodequiz@gmail.com')
+app.config['MAIL_USERNAME'] = 'pycodequiz@gmail.com'
+app.config['MAIL_PASSWORD'] = 'dhydjvenutwwacwn'
+app.config['MAIL_DEFAULT_SENDER'] = 'pycodequiz@gmail.com'
 
 mail = Mail(app)
 
@@ -86,7 +87,7 @@ def callback():
     if 'user_email' in session:
         send_welcome_email(session['user_email'])
 
-    return redirect(url_for('home'))
+    return redirect(url_for('login_page'))
 
 
 def load_gmail_credentials():
@@ -102,7 +103,7 @@ def load_gmail_credentials():
         print("Failed to load Gmail credentials:", e)
         return None
 
-def send_welcome_email(email):
+def send_welcome_email(recipient_email):
     credentials = load_gmail_credentials()
     if not credentials:
         print("Credentials not available.")
@@ -110,14 +111,15 @@ def send_welcome_email(email):
 
     service = build('gmail', 'v1', credentials=credentials)
     message = MIMEMultipart()
-    message['to'] = email
+    message['to'] = recipient_email
+    message['from'] = 'pycodequiz@gmail.com'  # Add this line
     message['subject'] = 'Welcome to Pycode!'
     body = 'Hello, \n\nThank you for signing up to Pycode. Have fun and good luck!'
     message.attach(MIMEText(body, 'plain'))
 
     raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
     try:
-        service.users().messages().send(userId='me', body={'raw': raw_message}).execute()
+        service.users().messages().send(userId='pycodequiz@gmail.com', body={'raw': raw_message}).execute()
         print("Welcome email sent!")
     except Exception as error:
         print(f"Error sending email: {error}")
