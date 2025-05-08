@@ -86,7 +86,9 @@ def callback():
     # Send welcome email
     if 'user_email' in session:
         send_welcome_email(session['user_email'])
-
+    
+    # Clear the session and redirect to login
+    session.clear()
     return redirect(url_for('login_page'))
 
 
@@ -273,8 +275,12 @@ def purchase_life():
                 cursor.execute("UPDATE users SET cash = %s, lives = %s WHERE user_id = %s", (new_cash, new_lives, user_id))
                 db.commit()
 
-                # Send email notification for life purchase
-                msg = Message('Life Purchased', recipients=[user['email']])
+                # Updated email sending
+                msg = Message(
+                    'Life Purchased',
+                    sender='pycodequiz@gmail.com',
+                    recipients=[user['email']]
+                )
                 msg.body = "You successfully purchased a life for $100. Good luck on your next quiz!"
                 mail.send(msg)
 
@@ -285,6 +291,7 @@ def purchase_life():
         return jsonify({"error": str(err)}), 500
     finally:
         db.close()
+
 
 @app.route('/earn_cash', methods=['POST'])
 def earn_cash():
@@ -305,15 +312,21 @@ def earn_cash():
         with db.cursor() as cursor:
             cursor.execute("UPDATE users SET cash = cash + %s WHERE user_id = %s", (reward, user_id))
             cursor.execute("INSERT INTO transactions (user_id, type, amount) VALUES (%s, %s, %s)", (user_id, 'quiz_reward', reward))
+            
+            # Get user email
+            cursor.execute("SELECT email FROM users WHERE user_id = %s", (user_id,))
+            user_email = cursor.fetchone()['email']
         db.commit()
         db.close()
 
         # Send email notification for earning cash
         if reward > 0:
-            cursor.execute("SELECT email FROM users WHERE user_id = %s", (user_id,))
-            user_email = cursor.fetchone()['email']
-            msg = Message('Cash Earned!', recipients=[user_email])
-            msg.body = f"Congratulations! You earned {reward} cash for completing the quiz."
+            msg = Message(
+                'Cash Earned!',
+                sender='pycodequiz@gmail.com',
+                recipients=[user_email]
+            )
+            msg.body = f"Congratulations! You earned {reward} cash for completing the quiz!"
             mail.send(msg)
 
         return jsonify({'message': f'You earned {reward} cash!'})
