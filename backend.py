@@ -171,10 +171,13 @@ def signup():
 @app.route('/')
 def home():
     if 'user_id' not in session:
-        return redirect(url_for('login_page'))  # Redirect to login if not logged in
+        # Debug print to help understand the issue
+        print("No user_id in session, redirecting to login page")
+        return redirect(url_for('login_page'))
+    
+    # Debug print to confirm session exists
+    print(f"User {session['user_id']} is in session, displaying main page")
     return render_template('main_pg.html')
-
-# Other routes remain the same...
 
 @app.route('/signup_page')
 def signup_page():
@@ -207,6 +210,11 @@ def level3_page():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login_page():
+    # If user is already logged in, redirect to home
+    if 'user_id' in session:
+        print(f"User already logged in with ID: {session['user_id']}, redirecting to home")
+        return redirect(url_for('home'))
+        
     if request.method == 'POST':
         data = request.json
         username = data.get('username')
@@ -219,6 +227,8 @@ def login_page():
         db.close()
 
         if user and bcrypt.check_password_hash(user['password_hash'], password):
+            # Add debug print when setting session
+            print(f"Login successful for user: {username}, setting session")
             session['user_id'] = user['user_id']
             session['user_email'] = user['email']
             
@@ -239,6 +249,8 @@ def login_page():
         else:
             return jsonify({"error": "Invalid username or password"}), 401
 
+    # Add debug print for GET request to login page
+    print("Displaying login page")
     return render_template('login.html')
 
 @app.route('/get_balance', methods=['GET'])
@@ -396,6 +408,14 @@ def list_routes():
         line = urllib.parse.unquote(f"{rule.endpoint:30s} {methods:20s} {rule}")
         output.append(line)
     return '<pre>' + '\n'.join(sorted(output)) + '</pre>'
+
+@app.route('/debug_session')
+def debug_session():
+    session_content = {key: session[key] for key in session}
+    return jsonify({
+        "session_contains": session_content,
+        "user_id_exists": 'user_id' in session
+    })
 
 if __name__ == '__main__':
     app.run(debug=True)
