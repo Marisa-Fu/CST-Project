@@ -65,19 +65,29 @@ def callback():
     flow.fetch_token(authorization_response=request.url)
     credentials = flow.credentials
 
-    # Save to session
     session['credentials'] = pickle.dumps(credentials)
 
-    # Save to file for persistent reuse
     with open('gmail_token.pkl', 'wb') as token:
         pickle.dump(credentials, token)
 
-    print("OAuth2 Authentication successful and credentials saved to file.")
+    # Update user's Gmail authentication status
+    if 'user_id' in session:
+        db = get_db_connection()
+        with db.cursor() as cursor:
+            cursor.execute("""
+                UPDATE users 
+                SET gmail_authenticated = 1 
+                WHERE user_id = %s""", 
+                (session['user_id'],))
+            db.commit()
+        db.close()
 
-    # After successful authentication, send welcome email
-    send_welcome_email(session['user_email'])
+    # Send welcome email
+    if 'user_email' in session:
+        send_welcome_email(session['user_email'])
 
-    return redirect(url_for('home'))  # Redirect to the main page after auth
+    return redirect(url_for('home'))
+
 
 def load_gmail_credentials():
     try:
@@ -127,14 +137,24 @@ def signup():
     try:
         db = get_db_connection()
         with db.cursor() as cursor:
-            cursor.execute("INSERT INTO users (username, password_hash, email, cash, lives) VALUES (%s, %s, %s, 500, 0)",
-                           (username, hashed_password, email))
-        db.commit()
+            cursor.execute("""
+                INSERT INTO users 
+                (username, password_hash, email, cash, lives, gmail_authenticated) 
+                VALUES (%s, %s, %s, 500, 0, 0)""",
+                (username, hashed_password, email))
+            db.commit()
+            
+            cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
+            user = cursor.fetchone()
+            
+            session['user_email'] = email
+            session['user_id'] = user['user_id']
+            session['needs_gmail_auth'] = True  # Add this flag
 
-        # After successful signup, set the user email in session and redirect to Google OAuth
-        session['user_email'] = user['email']
-
-        return jsonify({"message": "Signup successful! Please authenticate with Google."}), 200
+        return jsonify({
+            "message": "Signup successful!", 
+            "redirect": url_for('authorize')
+        }), 200
 
     except pymysql.err.IntegrityError:
         return jsonify({"error": "Username or email already taken"}), 400
@@ -143,6 +163,7 @@ def signup():
     finally:
         db.close()
 
+
 @app.route('/')
 def home():
     if 'user_id' not in session:
@@ -150,9 +171,6 @@ def home():
     return render_template('main_pg.html')
 
 # Other routes remain the same...
-
-if __name__ == '__main__':
-    app.run(debug=True)
 
 @app.route('/signup_page')
 def signup_page():
@@ -183,23 +201,39 @@ def level3_page():
         return redirect(url_for('login_page'))
     return render_template('LVL-3.html')
 
-@app.route('/login', methods=['POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login_page():
-    data = request.json
-    username = data.get('username')
-    password = data.get('password')
+    if request.method == 'POST':
+        data = request.json
+        username = data.get('username')
+        password = data.get('password')
 
-    db = get_db_connection()
-    with db.cursor() as cursor:
-        cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
-        user = cursor.fetchone()
-    db.close()
+        db = get_db_connection()
+        with db.cursor() as cursor:
+            cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+            user = cursor.fetchone()
+        db.close()
 
-    if user and bcrypt.check_password_hash(user['password_hash'], password):
-        session['user_id'] = user['user_id']  # Ensure session user_id is set
-        return redirect(url_for('authorize'))  # Redirect to Google OAuth after login
-    else:
-        return jsonify({"error": "Invalid username or password"}), 401
+        if user and bcrypt.check_password_hash(user['password_hash'], password):
+            session['user_id'] = user['user_id']
+            session['user_email'] = user['email']
+            
+            # Check if user needs Gmail authentication
+            if not user.get('gmail_authenticated'):
+                return jsonify({
+                    "message": "Login successful",
+                    "needs_gmail_auth": True,
+                    "redirect": url_for('authorize')
+                }), 200
+            
+            return jsonify({
+                "message": "Login successful",
+                "user_id": user['user_id'],
+                "cash": user['cash'],
+                "lives": user['lives']
+            }), 200
+        else:
+            return jsonify({"error": "Invalid username or password"}), 401
 
     return render_template('login.html')
 

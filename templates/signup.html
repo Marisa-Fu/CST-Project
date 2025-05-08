@@ -47,27 +47,27 @@
     <script>
         document.getElementById("signup-form").addEventListener("submit", function (e) {
             e.preventDefault();
-
+    
             const email = document.getElementById("email").value;
             const username = document.getElementById("username").value;
             const password = document.getElementById("password").value;
             const errorBox = document.getElementById("error-message");
             const successBox = document.getElementById("success-message");
-
+    
             errorBox.textContent = "";
             successBox.textContent = "";
-
+    
             if (username.length < 5) {
                 errorBox.textContent = "Username must be at least 5 characters.";
                 return;
             }
-
+    
             const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
             if (!passwordRegex.test(password)) {
                 errorBox.textContent = "Password must include at least 8 characters, 1 uppercase, 1 lowercase, and 1 special character.";
                 return;
             }
-
+    
             fetch("/signup", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -75,15 +75,18 @@
             })
             .then(async (response) => {
                 const contentType = response.headers.get("content-type");
-
+    
                 if (contentType && contentType.includes("application/json")) {
                     const data = await response.json();
-
+    
                     if (response.ok) {
                         successBox.textContent = data.message;
-                        setTimeout(() => {
+                        // Changed this part to handle Gmail auth redirect
+                        if (data.redirect) {
+                            window.location.href = data.redirect;
+                        } else {
                             window.location.href = "/login";
-                        }, 1000);
+                        }
                     } else {
                         errorBox.textContent = data.error || "Signup failed.";
                     }
@@ -95,8 +98,8 @@
                 console.error("Error:", error);
                 errorBox.textContent = "Something went wrong. Please try again.";
             });
-
         });
     </script>
+    
 </body>
 </html>

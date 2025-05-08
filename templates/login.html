@@ -36,13 +36,13 @@
     <script>
         document.getElementById("login-form").addEventListener("submit", function (e) {
             e.preventDefault();
-
+    
             const username = document.getElementById("username").value;
             const password = document.getElementById("password").value;
             const errorBox = document.getElementById("error-message");
-
-            errorBox.textContent ="";
-
+    
+            errorBox.textContent = "";
+    
             fetch("/login", {
                 method: "POST",
                 headers: {
@@ -54,7 +54,12 @@
             .then(data => {
                 console.log(data);
                 if (data.message === "Login successful") {
-                    window.location.href = "/";
+                    // Changed this part to handle Gmail auth redirect
+                    if (data.needs_gmail_auth && data.redirect) {
+                        window.location.href = data.redirect;
+                    } else {
+                        window.location.href = "/";
+                    }
                 } else {
                     errorBox.textContent = data.error || data.message || "Something went wrong.";
                 }
@@ -65,5 +70,6 @@
             });
         });
     </script>
+    
 </body>
 </html>
