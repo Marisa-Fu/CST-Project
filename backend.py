@@ -69,6 +69,7 @@ def callback():
     credentials = flow.credentials
 
     session['credentials'] = pickle.dumps(credentials)
+    print(f"Stored credentials in session: {session['credentials']}")
 
     with open('gmail_token.pkl', 'wb') as token:
         pickle.dump(credentials, token)
@@ -89,16 +90,16 @@ def callback():
             user = cursor.fetchone()
         db.close()
 
-        # Send welcome email if needed
+        # Send welcome email
         if 'user_email' in session:
             send_welcome_email(session['user_email'])
         
         print(f"Gmail authentication completed for user {session['user_id']}")
-        # Redirect to home page instead of login page
+        # Redirecting to home page instead of login page
         return redirect(url_for('home'))
     else:
         print("No user_id in session during callback")
-        # If somehow there's no session, redirect to login
+        # If (somehow) there's no session, redirect to login
         return redirect(url_for('login_page'))
 
 
@@ -106,7 +107,9 @@ def load_gmail_credentials():
     try:
         with open('gmail_token.pkl', 'rb') as token:
             credentials = pickle.load(token)
+        print("Loaded credentials.")
         if credentials.expired and credentials.refresh_token:
+            print("Credentials expired, refreshing...")
             credentials.refresh(Request())
             with open('gmail_token.pkl', 'wb') as token:
                 pickle.dump(credentials, token)
@@ -114,6 +117,7 @@ def load_gmail_credentials():
     except Exception as e:
         print("Failed to load Gmail credentials:", e)
         return None
+
 
 def send_welcome_email(recipient_email):
     credentials = load_gmail_credentials()

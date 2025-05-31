@@ -5,11 +5,13 @@
     }
     
     
+    
     body {
     
     font-family: 'Inter', sans-serif;
     
     }
+    
     
     
     * {
@@ -23,6 +25,7 @@
     font-family: 'Segoe UI', 'Courier New', Courier, monospace;
     
     }
+    
     
     
     body {
@@ -40,6 +43,7 @@
     position: relative;
     
     }
+    
     
     
     body::before {
@@ -71,6 +75,7 @@
     }
     
     
+    
     header {
     
     display: flex;
@@ -88,6 +93,7 @@
     }
     
     
+    
     .logo-container {
     
     display: flex;
@@ -95,6 +101,16 @@
     align-items: center;
     
     }
+    
+    main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Already present, keeps items centered horizontally */
+    justify-content: center; /* Add this to center vertically */
+    padding: 3rem 1rem;
+    }
+    
     
     
     .logo {
@@ -106,6 +122,7 @@
     }
     
     
+    
     .site-name {
     
     font-size: 1.5rem;
@@ -113,6 +130,7 @@
     font-weight: bold;
     
     }
+    
     
     
     .logout-btn {
@@ -134,11 +152,13 @@
     }
     
     
+    
     .logout-btn:hover {
     
     background-color: #e68277;
     
     }
+    
     
     
     main {
@@ -156,6 +176,7 @@
     }
     
     
+    
     main h1 {
     
     font-size: 2rem;
@@ -169,6 +190,7 @@
     }
     
     
+    
     .level-buttons {
     
     display: flex;
@@ -180,6 +202,7 @@
     justify-content: center;
     
     }
+    
     
     
     .level-btn {
@@ -205,11 +228,13 @@
     }
     
     
+    
     .level-btn:hover {
     
     background-color: #66b3e7;
     
     }
+    
     
     
     .image-button {
@@ -225,6 +250,7 @@
     }
     
     
+    
     .image-button img {
     
     width: 60px;
@@ -234,6 +260,7 @@
     pointer-events: auto;
     
     }
+    
     
     
     .popup-overlay {
@@ -261,6 +288,7 @@
     }
     
     
+    
     .popup-content {
     
     background: black;
@@ -278,6 +306,7 @@
     }
     
     
+    
     .close-btn {
     
     position: absolute;
@@ -293,11 +322,13 @@
     }
     
     
+    
     #question-container {
     
     margin-bottom: 6rem;
     
     }
+    
     
     
     .options-container {
@@ -311,6 +342,7 @@
     align-items: center;
     
     }
+    
     
     
     .option-button {
@@ -346,6 +378,7 @@
     }
     
     
+    
     .option-button:hover {
     
     background-color: #4caf50;
@@ -353,6 +386,7 @@
     color: white;
     
     }
+    
     
     
     .correct-answer {
@@ -364,6 +398,7 @@
     }
     
     
+    
     .wrong-answer {
     
     background-color: #f44336;
@@ -371,6 +406,7 @@
     color: white;
     
     }
+    
     
     
     #results-container {
@@ -382,6 +418,7 @@
     }
     
     
+    
     #results-container h2 {
     
     font-size: 2rem;
@@ -391,6 +428,7 @@
     font-family: 'Special Gothic Regular', cursive;
     
     }
+    
     
     
     #results-container p {
@@ -414,7 +452,12 @@
     font-family: 'Special Gothic Regular', cursive;
     
     }
-    
+    #countdown {
+    font-size: 4rem; /* Adjust to your desired size */
+    font-weight: bold;
+    color: #f0f0f0; /* Optional: Change the color */
+    margin-top: 2rem; /* Optional: Add some spacing */
+    }
     
     #results-container .summary-table th,
     
@@ -429,11 +472,13 @@
     }
     
     
+    
     #results-container .summary-table th {
     
     background-color: #f0f0f0;
     
     }
+    
     
     
     #results-container .summary-table tr:nth-child(even) {
